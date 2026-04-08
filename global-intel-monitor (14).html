@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球情報監控系統</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#03080d;--bg2:#060e16;--panel:#080f18;
+  --border:#112233;--border2:#1a3349;
+  --accent:#00c8f8;--green:#00e87a;--amber:#f5a623;
+  --red:#ff2244;--orange:#ff6020;--yellow:#f5d800;
+  --purple:#a855f7;--teal:#2dd4bf;--blue:#3b82f6;
+  --text:#8fb8cc;--text2:#c8dce8;--dim:#3a5a6a;
+  --mono:'Share Tech Mono','Courier New',monospace;
+  --ui:'Rajdhani','Arial Narrow',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+#app{display:flex;flex-direction:column;height:100vh;font-family:var(--mono);color:var(--text);}
+
+/* HEADER */
+#hdr{display:flex;align-items:center;gap:7px;padding:0 10px;height:44px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border2);}
+#hdr-logo{font-family:var(--ui);font-size:15px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase;white-space:nowrap;}
+#hdr-logo em{color:var(--red);font-style:normal;}
+#hdr-meta{display:flex;gap:8px;font-size:9px;color:var(--dim);letter-spacing:1px;flex-shrink:0;}
+.hdr-live{display:flex;align-items:center;gap:4px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+#clocks{display:flex;margin-left:auto;flex-shrink:0;}
+.tz-block{display:flex;flex-direction:column;align-items:center;padding:0 7px;border-left:1px solid var(--border);}
+.tz-label{font-size:7px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px;white-space:nowrap;}
+.tz-time{font-size:11px;letter-spacing:1px;font-family:var(--mono);}
+#clk-et{color:var(--accent);}#clk-pt{color:#60a5fa;}#clk-uk{color:var(--amber);}#clk-me{color:var(--orange);}#clk-tw{color:var(--green);}
+.hdr-btn{padding:3px 9px;font-family:var(--mono);font-size:9px;letter-spacing:1px;background:transparent;border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;text-transform:uppercase;flex-shrink:0;}
+#btn-news{border-color:var(--accent);color:var(--accent);}#btn-news:hover{background:var(--accent);color:var(--bg);}
+#btn-news:disabled{opacity:.35;cursor:not-allowed;}
+#btn-counter{border-color:var(--purple);color:var(--purple);}#btn-counter:hover{background:var(--purple);color:#fff;}
+#btn-counter:disabled{opacity:.35;cursor:not-allowed;}
+#btn-debug{border-color:var(--dim);color:var(--dim);font-size:8px;}#btn-debug:hover{border-color:var(--amber);color:var(--amber);}
+
+/* DUAL ALERT STRIPS */
+#strip-quake{height:22px;background:#080400;border-bottom:1px solid #2a1400;display:flex;align-items:center;overflow:hidden;flex-shrink:0;}
+#strip-weather{height:22px;background:#010810;border-bottom:1px solid #001a33;display:flex;align-items:center;overflow:hidden;flex-shrink:0;}
+.strip-label{padding:0 8px;font-size:8px;letter-spacing:2px;white-space:nowrap;border-right:1px solid;flex-shrink:0;line-height:22px;}
+#strip-quake .strip-label{color:var(--orange);border-color:#2a1400;}
+#strip-weather .strip-label{color:var(--blue);border-color:#001a33;}
+.strip-scroll{flex:1;overflow:hidden;height:22px;display:flex;align-items:center;position:relative;}
+.strip-inner{white-space:nowrap;font-size:10px;position:absolute;left:0;line-height:1;}
+.q-m4{color:#8a5a00;}.q-m5{color:var(--amber);}.q-m6{color:var(--red);}
+.wx-td{color:#4a7a9b;}.wx-ts{color:var(--amber);}.wx-ty3{color:var(--orange);}.wx-ty5{color:var(--red);}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* LEFT */
+#left{width:258px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--border);overflow:hidden;}
+.panel-hdr{padding:6px 12px;font-size:9px;letter-spacing:3px;color:var(--dim);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;flex-shrink:0;}
+.badge{background:var(--accent);color:var(--bg);padding:1px 6px;font-size:9px;border-radius:2px;font-weight:bold;}
+.badge-red{background:var(--red);}.badge-purple{background:var(--purple);}.badge-yellow{background:var(--yellow);color:#000;}
+#search-wrap{padding:5px 8px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:4px;}
+#search-input{flex:1;background:#000;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:10px;padding:3px 7px;outline:none;}
+#search-input:focus{border-color:var(--accent);}
+#search-input::placeholder{color:var(--dim);}
+#btn-deep{padding:3px 7px;font-family:var(--mono);font-size:9px;background:transparent;border:1px solid var(--teal);color:var(--teal);cursor:pointer;white-space:nowrap;}
+#btn-deep:hover{background:var(--teal);color:var(--bg);}#btn-deep:disabled{opacity:.35;cursor:not-allowed;}
+#search-info{padding:2px 10px;font-size:9px;color:var(--dim);flex-shrink:0;}
+#cat-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctab{flex:1;padding:5px 2px;font-size:9px;letter-spacing:1px;text-align:center;cursor:pointer;color:var(--dim);border-right:1px solid var(--border);transition:all .15s;text-transform:uppercase;user-select:none;}
+.ctab:last-child{border-right:none;}.ctab.on{font-weight:bold;}
+.ctab[data-c="all"].on{background:var(--dim);color:var(--bg2);}
+.ctab[data-c="war"].on{background:var(--red);color:#fff;}
+.ctab[data-c="disaster"].on{background:var(--orange);color:#fff;}
+.ctab[data-c="economic"].on{background:var(--yellow);color:#000;}
+.ctab[data-c="policy"].on{background:var(--accent);color:var(--bg);}
+#ev-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.ev-item{padding:7px 12px;border-bottom:1px solid #0b1a24;cursor:pointer;transition:background .12s;}
+.ev-item:hover{background:rgba(0,200,248,.05);}
+.ev-item.alert-hit{border-left:2px solid var(--yellow);}
+.ev-item.has-impact{border-left:2px solid var(--teal);}
+.ev-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;}
+.ev-title{font-size:11px;color:var(--text2);line-height:1.4;margin-bottom:2px;}
+.ev-foot{font-size:10px;color:var(--dim);display:flex;justify-content:space-between;}
+.kw-hit{color:var(--yellow);font-weight:bold;}
+
+/* MAP */
+#map-wrap{flex:1;position:relative;overflow:hidden;}
+#map{width:100%;height:100%;}
+.map-scan{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.15;z-index:999;pointer-events:none;animation:scan 8s linear infinite;}
+@keyframes scan{0%{top:0}100%{top:100%}}
+#legend{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:3px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--dim);background:rgba(3,8,13,.9);padding:3px 8px;border:1px solid var(--border2);}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+#map-count{position:absolute;bottom:36px;right:10px;z-index:1000;background:rgba(3,8,13,.9);border:1px solid var(--border2);padding:3px 8px;font-size:9px;color:var(--dim);}
+#impact-box{display:none;position:absolute;bottom:46px;left:50%;transform:translateX(-50%);z-index:2000;background:rgba(3,8,13,.97);border:1px solid var(--teal);padding:10px 14px;min-width:260px;max-width:340px;}
+#impact-box.show{display:block;}
+#impact-title{font-size:9px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+#impact-items{display:flex;flex-wrap:wrap;gap:5px;}
+.imp{padding:2px 7px;font-size:10px;border:1px solid;border-radius:2px;}
+.imp-up{color:var(--green);border-color:var(--green);background:rgba(0,232,122,.07);}
+.imp-dn{color:var(--red);border-color:var(--red);background:rgba(255,34,68,.07);}
+.imp-vol{color:var(--amber);border-color:var(--amber);background:rgba(245,166,35,.07);}
+#impact-close{position:absolute;top:4px;right:8px;cursor:pointer;color:var(--dim);font-size:11px;}
+
+/* RIGHT */
+#right{width:318px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--border);overflow:hidden;}
+
+/* Market tabs */
+#mkt-section{flex-shrink:0;border-bottom:1px solid var(--border2);}
+#mkt-tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mkt-tab{flex:1;padding:4px 2px;font-size:8px;letter-spacing:1px;text-align:center;cursor:pointer;color:var(--dim);border-right:1px solid var(--border);text-transform:uppercase;user-select:none;transition:all .15s;}
+.mkt-tab:last-child{border-right:none;}.mkt-tab.on{color:var(--accent);border-bottom:1px solid var(--accent);}
+.mkt-pane{display:none;height:188px;overflow:hidden;}
+.mkt-pane.on{display:block;}
+.mkt-pane.scrollable{overflow-y:auto;}
+
+#alert-section{flex-shrink:0;border-bottom:1px solid var(--border2);}
+#alert-list{max-height:100px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.alert-item{padding:5px 12px;border-bottom:1px solid #0b1a24;cursor:pointer;}
+.alert-item:hover{background:rgba(245,216,0,.04);}
+.alert-kw{font-size:9px;letter-spacing:2px;color:var(--yellow);margin-bottom:2px;text-transform:uppercase;}
+.alert-title{font-size:11px;color:var(--text2);line-height:1.35;}
+.alert-src{font-size:9px;color:var(--dim);margin-top:1px;}
+
+#counter-section{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+#counter-hdr{display:flex;justify-content:space-between;align-items:center;padding:5px 12px;font-size:9px;letter-spacing:3px;color:var(--dim);border-bottom:1px solid var(--border);text-transform:uppercase;flex-shrink:0;}
+#counter-feed{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.counter-item{padding:7px 12px;border-bottom:1px solid #0b1a24;}
+.counter-src{font-size:9px;letter-spacing:1px;text-transform:uppercase;}
+.counter-time{font-size:9px;color:var(--dim);}
+.counter-body{font-size:11px;color:var(--text2);line-height:1.45;margin-top:2px;}
+.counter-link{font-size:9px;color:var(--purple);text-decoration:none;opacity:.7;display:inline-block;margin-top:2px;}
+.counter-link:hover{opacity:1;}
+#status-bar{padding:4px 12px;font-size:9px;color:var(--dim);border-top:1px solid var(--border);letter-spacing:1px;flex-shrink:0;min-height:22px;}
+
+/* DEBUG */
+#debug-panel{display:none;position:fixed;bottom:0;left:0;right:0;height:170px;background:rgba(0,0,0,.97);border-top:1px solid var(--amber);z-index:9000;flex-direction:column;}
+#debug-panel.open{display:flex;}
+#debug-hdr{padding:4px 12px;font-size:9px;color:var(--amber);border-bottom:1px solid #333;display:flex;justify-content:space-between;flex-shrink:0;}
+#debug-log{flex:1;overflow-y:auto;padding:6px 12px;font-size:10px;line-height:1.7;color:#aaa;white-space:pre-wrap;word-break:break-all;}
+
+/* TICKER */
+#ticker{height:22px;background:#000;border-top:1px solid var(--border);display:flex;align-items:center;overflow:hidden;flex-shrink:0;position:relative;}
+#ticker-inner{white-space:nowrap;font-size:10px;position:absolute;}
+.ti{margin:0 20px;color:var(--dim);}
+.ti b{color:var(--accent);margin-right:4px;font-weight:normal;}
+
+/* LEAFLET */
+.leaflet-popup-content-wrapper{background:rgba(5,12,20,.97)!important;border:1px solid var(--border2)!important;border-radius:0!important;color:var(--text)!important;font-family:var(--mono)!important;font-size:11px!important;min-width:230px!important;max-width:290px!important;}
+.leaflet-popup-tip{background:var(--border2)!important;}
+.leaflet-popup-close-button{color:var(--dim)!important;font-size:14px!important;}
+.leaflet-popup-content{margin:10px 12px!important;}
+.pu-type{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.pu-title{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:5px;}
+.pu-loc{font-size:10px;color:var(--dim);}
+.pu-body{font-size:10px;color:var(--text);line-height:1.55;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.pu-impact{margin-top:6px;padding-top:5px;border-top:1px solid #1a3349;font-size:9px;}
+.pu-impact-label{color:var(--teal);letter-spacing:1px;margin-bottom:3px;}
+.pu-imp-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.pu-imp{padding:2px 6px;font-size:9px;border-radius:2px;border:1px solid;}
+.pu-foot{font-size:9px;color:var(--dim);margin-top:5px;display:flex;justify-content:space-between;}
+.pu-foot a{color:var(--accent);text-decoration:none;}
+.pm{position:relative;cursor:pointer;}
+.pm-ring{width:100%;height:100%;border-radius:50%;position:absolute;top:0;left:0;animation:pring 2.2s ease-out infinite;}
+.pm-dot{width:100%;height:100%;border-radius:50%;position:absolute;top:0;left:0;}
+@keyframes pring{0%{transform:scale(1);opacity:.7}100%{transform:scale(3);opacity:0}}
+.wx-marker{border-radius:50%;border:2px solid;animation:wxspin 4s linear infinite;}
+@keyframes wxspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* 地圖圖層切換 */
+#layer-ctrl{position:absolute;bottom:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:3px;}
+.layer-btn{display:flex;align-items:center;gap:6px;padding:3px 8px;font-family:var(--mono);font-size:9px;background:rgba(3,8,13,.9);border:1px solid var(--border2);cursor:pointer;color:var(--dim);transition:all .15s;user-select:none;letter-spacing:.5px;}
+.layer-btn.on{color:var(--text2);border-color:var(--border);}
+.layer-btn .lb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.4;}
+.layer-btn.on .lb-dot{opacity:1;}
+.layer-btn:hover{border-color:var(--text2);}
+/* 自訂市場資料表格 */
+.cmkt-row{display:flex;align-items:center;padding:2px 10px;font-size:10px;border-bottom:1px solid #0b1a24;gap:4px;}
+.cmkt-name{color:var(--dim);width:72px;flex-shrink:0;}
+.cmkt-val{color:var(--text2);flex:1;}
+.cmkt-up{color:var(--green);}
+.cmkt-dn{color:var(--red);}
+.cmkt-date{font-size:8px;color:var(--dim);margin-left:auto;}
+.cmkt-na{color:var(--dim);font-style:italic;font-size:9px;}
+.cmkt-hdr{padding:3px 10px;font-size:8px;color:var(--dim);letter-spacing:1px;background:#060e16;display:flex;justify-content:space-between;align-items:center;}
+.cmkt-refbtn{font-family:var(--mono);font-size:8px;background:transparent;border:1px solid var(--dim);color:var(--dim);cursor:pointer;padding:1px 6px;}
+.cmkt-refbtn:hover{border-color:var(--accent);color:var(--accent);}
+/* 經濟日曆 */
+.cal-row{display:flex;align-items:center;padding:2px 8px;font-size:9px;border-bottom:1px solid #0b1a24;gap:3px;white-space:nowrap;overflow:hidden;}
+.cal-imp{width:11px;flex-shrink:0;}
+.cal-flag{width:28px;flex-shrink:0;color:var(--accent);font-size:8px;}
+.cal-title{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;}
+.cal-time{width:48px;color:var(--dim);flex-shrink:0;text-align:right;font-size:8px;}
+.cal-actual{width:36px;text-align:right;flex-shrink:0;font-size:9px;}
+.cal-prev{width:42px;color:var(--dim);text-align:right;flex-shrink:0;font-size:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<div id="hdr">
+  <div id="hdr-logo">全球<em>情報</em>監控</div>
+  <div id="hdr-meta">
+    <div class="hdr-live"><div class="live-dot"></div>直播中</div>
+    <div id="ev-count">0 則</div>
+    <div id="threat-level">威脅：—</div>
+  </div>
+  <div id="clocks">
+    <div class="tz-block"><div class="tz-label">🇺🇸 美東ET</div><div class="tz-time" id="clk-et">--:--:--</div></div>
+    <div class="tz-block"><div class="tz-label">🇺🇸 美西PT</div><div class="tz-time" id="clk-pt">--:--:--</div></div>
+    <div class="tz-block"><div class="tz-label">🇬🇧 英國BST</div><div class="tz-time" id="clk-uk">--:--:--</div></div>
+    <div class="tz-block"><div class="tz-label">🕌 中東+3</div><div class="tz-time" id="clk-me">--:--:--</div></div>
+    <div class="tz-block"><div class="tz-label">🇹🇼 台北CST</div><div class="tz-time" id="clk-tw">--:--:--</div></div>
+  </div>
+  <button class="hdr-btn" id="btn-news" onclick="refreshNews()">⟳ 刷新新聞</button>
+  <button class="hdr-btn" id="btn-counter" onclick="refreshCounter()">⟳ 對照視角</button>
+  <button class="hdr-btn" id="btn-debug" onclick="toggleDebug()">除錯</button>
+</div>
+
+<!-- STRIP 1: QUAKE -->
+<div id="strip-quake">
+  <div class="strip-label">⚡ 地震M4+</div>
+  <div class="strip-scroll"><div class="strip-inner" id="quake-inner">載入中...</div></div>
+</div>
+
+<!-- STRIP 2: WEATHER -->
+<div id="strip-weather">
+  <div class="strip-label">🌀 氣象警報</div>
+  <div class="strip-scroll"><div class="strip-inner" id="weather-inner">載入中...</div></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT -->
+  <div id="left">
+    <div class="panel-hdr">即時事件 <span class="badge" id="total-badge">0</span></div>
+    <div id="search-wrap">
+      <input id="search-input" type="text" placeholder="搜尋關鍵字..." oninput="onSearch()"/>
+      <button id="btn-deep" onclick="deepSearch()">深度</button>
+    </div>
+    <div id="search-info">共 <span id="ev-total">0</span> 則 · 顯示 <span id="ev-shown">0</span> 則</div>
+    <div id="cat-tabs">
+      <div class="ctab on" data-c="all" onclick="filterCat('all')">全部</div>
+      <div class="ctab" data-c="war" onclick="filterCat('war')">衝突</div>
+      <div class="ctab" data-c="disaster" onclick="filterCat('disaster')">災害</div>
+      <div class="ctab" data-c="economic" onclick="filterCat('economic')">經濟</div>
+      <div class="ctab" data-c="policy" onclick="filterCat('policy')">政策</div>
+    </div>
+    <div id="ev-list">
+      <div style="padding:14px 12px;font-size:11px;color:var(--dim);line-height:2.3">
+        ▸ 點「刷新新聞」載入即時事件<br>
+        ▸ 點「對照視角」載入中俄觀點<br>
+        ▸ 搜尋框過濾 / 深度搜尋重新抓取<br>
+        ▸ ◈ 符號 = 有市場影響分析
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div class="map-scan"></div>
+    <div id="legend">
+      <div class="leg"><div class="leg-dot" style="background:#ff2244"></div>衝突戰爭</div>
+      <div class="leg"><div class="leg-dot" style="background:#ff6020"></div>災害人禍</div>
+      <div class="leg"><div class="leg-dot" style="background:#f5d800"></div>經濟危機</div>
+      <div class="leg"><div class="leg-dot" style="background:#00c8f8"></div>重大政策</div>
+      <div class="leg"><div class="leg-dot" style="background:#00e87a"></div>市場事件</div>
+      <div class="leg"><div class="leg-dot" style="background:#f5a623;opacity:.8"></div>地震M4+</div>
+      <div class="leg"><div class="leg-dot" style="background:#3b82f6;border:1px solid #60a5fa"></div>颱風/颶風</div>
+    </div>
+    <div id="map-count">標記 <span id="shown-count">0</span> 個</div>
+    <div id="layer-ctrl">
+      <div class="layer-btn on" id="layer-news" onclick="toggleLayer('news')"><div class="lb-dot" style="background:#00c8f8"></div>新聞事件</div>
+      <div class="layer-btn on" id="layer-quake" onclick="toggleLayer('quake')"><div class="lb-dot" style="background:#f5a623"></div>地震 M4+</div>
+      <div class="layer-btn on" id="layer-wx" onclick="toggleLayer('wx')"><div class="lb-dot" style="background:#3b82f6"></div>氣象警報</div>
+    </div>
+    <div id="impact-box">
+      <div id="impact-close" onclick="closeImpact()">✕</div>
+      <div id="impact-title">市場影響分析</div>
+      <div id="impact-items"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+
+    <!-- 市場分頁 -->
+    <div id="mkt-section">
+      <div class="panel-hdr" style="padding-bottom:0;border-bottom:none;">全球市場 <span style="font-size:8px;color:var(--green)">● TradingView</span></div>
+      <div id="mkt-tab-bar">
+        <div class="mkt-tab on" onclick="switchMkt(0)">指數/期貨</div>
+        <div class="mkt-tab" onclick="switchMkt(1)">商品/指標</div>
+        <div class="mkt-tab" onclick="switchMkt(2)">外匯</div>
+        <div class="mkt-tab" onclick="switchMkt(3)">經濟日曆</div>
+      </div>
+
+      <!-- 分頁0：指數 -->
+      <div class="mkt-pane on" id="mkt-pane-0">
+        <div class="tradingview-widget-container" style="height:188px;">
+          <div class="tradingview-widget-container__widget" style="height:188px;"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+          {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"188",
+          "tabs":[{"title":"指數","symbols":[
+            {"s":"FOREXCOM:SPXUSD","d":"S&P 500"},
+            {"s":"FOREXCOM:NSXUSD","d":"NASDAQ 100"},
+            {"s":"FOREXCOM:DJI","d":"道瓊"},
+            {"s":"FOREXCOM:NI225","d":"日經225"},
+            {"s":"FOREXCOM:HK50","d":"恒生指數"},
+            {"s":"FOREXCOM:IN50","d":"印度NIFTY50"},
+            {"s":"FOREXCOM:KS11","d":"韓國KOSPI"},
+            {"s":"FOREXCOM:GER40","d":"德國DAX"},
+            {"s":"FOREXCOM:UK100","d":"FTSE 100"},
+            {"s":"BATS:VNM","d":"越南ETF"}
+          ]}]}
+          </script>
+        </div>
+      </div>
+
+      <!-- 分頁1：商品/指標 — 上段TradingView + 下段FRED/Stooq -->
+      <div class="mkt-pane scrollable" id="mkt-pane-1">
+        <div style="height:94px;overflow:hidden;">
+          <div class="tradingview-widget-container" style="height:94px;">
+            <div class="tradingview-widget-container__widget" style="height:94px;"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"94",
+            "tabs":[{"title":"商品","symbols":[
+              {"s":"FOREXCOM:XAUUSD","d":"黃金"},
+              {"s":"FOREXCOM:XTIUSD","d":"WTI原油"},
+              {"s":"FOREXCOM:XAGUSD","d":"白銀"},
+              {"s":"CRYPTO:BTCUSD","d":"比特幣"}
+            ]}]}
+            </script>
+          </div>
+        </div>
+        <div class="cmkt-hdr">
+          <span>FRED（VIX/US10Y）· Stooq（期貨）</span>
+          <button class="cmkt-refbtn" onclick="loadCustomCommodities()">⟳ 載入</button>
+        </div>
+        <div id="custom-comm-rows"><div style="padding:5px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得 VIX / 美10年債 / 天然氣 / 銅 / 台指期</div></div>
+      </div>
+
+      <!-- 分頁2：外匯 -->
+      <div class="mkt-pane" id="mkt-pane-2">
+        <div class="tradingview-widget-container" style="height:188px;">
+          <div class="tradingview-widget-container__widget" style="height:188px;"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+          {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"188",
+          "tabs":[{"title":"外匯","symbols":[
+            {"s":"FX_IDC:USDTWD","d":"美元/台幣"},
+            {"s":"FX:USDJPY","d":"美元/日圓"},
+            {"s":"FX:EURUSD","d":"歐元/美元"},
+            {"s":"FX:USDCNH","d":"美元/人民幣"},
+            {"s":"FX:USDKRW","d":"美元/韓元"},
+            {"s":"FX:GBPUSD","d":"英鎊/美元"},
+            {"s":"FX:USDHKD","d":"美元/港幣"},
+            {"s":"FOREXCOM:DXY","d":"美元指數DXY"}
+          ]}]}
+          </script>
+        </div>
+      </div>
+
+      <!-- 分頁3：經濟日曆 — Forex Factory（伺服器直連） -->
+      <div class="mkt-pane scrollable" id="mkt-pane-3">
+        <div class="cmkt-hdr">
+          <span>ForexFactory 本週重大事件</span>
+          <button class="cmkt-refbtn" onclick="loadEconCalendar()">⟳ 載入</button>
+        </div>
+        <div id="econ-cal-rows"><div style="padding:8px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得本週非農/CPI/FOMC等重大事件</div></div>
+      </div>
+    </div>
+
+    <!-- 關鍵字警報 -->
+    <div id="alert-section">
+      <div class="panel-hdr">關鍵字警報 <span id="alert-badge" class="badge badge-yellow">0</span></div>
+      <div id="alert-list">
+        <div style="padding:7px 12px;font-size:10px;color:var(--dim)">監控：台灣 · 台海 · TSMC · 半導體 · AI · 台積電</div>
+      </div>
+    </div>
+
+    <!-- 對照視角 -->
+    <div id="counter-section">
+      <div id="counter-hdr">
+        <span>對照視角 <span style="color:var(--purple);font-size:8px">中/俄/伊</span></span>
+        <span id="counter-badge" class="badge badge-purple">0</span>
+      </div>
+      <div id="counter-feed">
+        <div style="padding:10px 12px;font-size:11px;color:var(--dim);line-height:2.1">CGTN · 環球時報 · RT<br>Press TV · Sputnik<br><br>點「對照視角」載入</div>
+      </div>
+      <div id="status-bar">⬡ 系統就緒</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEBUG -->
+<div id="debug-panel">
+  <div id="debug-hdr"><span>除錯記錄</span><span onclick="document.getElementById('debug-log').innerHTML=''" style="cursor:pointer;color:var(--dim)">清除</span></div>
+  <div id="debug-log"></div>
+</div>
+
+<!-- TICKER -->
+<div id="ticker"><div id="ticker-inner">　全球情報監控系統 ▸ 刷新取得即時資訊　全球情報監控系統 ▸ 刷新取得即時資訊</div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ═══════════════════════════════
+// 來源設定
+// ═══════════════════════════════
+const RSS_MAIN=[
+  {name:'BBC World',   color:'#00c8f8', url:'https://feeds.bbci.co.uk/news/world/rss.xml'},
+  {name:'BBC商業',     color:'#f5d800', url:'https://feeds.bbci.co.uk/news/business/rss.xml'},
+  {name:'Reuters',     color:'#ff6020', url:'https://feeds.reuters.com/reuters/topNews'},
+  {name:'AP News',     color:'#f5a623', url:'https://feeds.apnews.com/rss/apf-topnews'},
+  {name:'Al Jazeera', color:'#00e87a', url:'https://www.aljazeera.com/xml/rss/all.xml'},
+  {name:'DW',          color:'#a855f7', url:'https://rss.dw.com/rdf/rss-en-world'},
+  {name:'France 24',  color:'#4f8ef7', url:'https://www.france24.com/en/rss'},
+  {name:'Nikkei Asia',color:'#ff2244', url:'https://asia.nikkei.com/rss/feed/nar'},
+  {name:'Guardian',   color:'#7c3aed', url:'https://www.theguardian.com/world/rss'},
+  {name:'NPR',         color:'#059669', url:'https://feeds.npr.org/1004/rss.xml'},
+];
+const RSS_COUNTER=[
+  {name:'CGTN',      color:'#dc2626', url:'https://www.cgtn.com/subscribe/rss/section/world.do'},
+  {name:'環球時報',  color:'#b91c1c', url:'https://www.globaltimes.cn/rss/outbrain.xml'},
+  {name:'RT',         color:'#991b1b', url:'https://www.rt.com/rss/news/'},
+  {name:'Press TV',  color:'#92400e', url:'https://www.presstv.ir/RSS'},
+  {name:'Sputnik',   color:'#78350f', url:'https://sputnikglobe.com/export/rss2/archive/index.xml'},
+];
+const PROXIES=[
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+const ALERT_KW=[
+  {zh:'台灣',en:'taiwan'},{zh:'台海',en:'taiwan strait'},
+  {zh:'TSMC',en:'tsmc'},{zh:'台積電',en:'tsmc'},
+  {zh:'半導體',en:'semiconductor'},{zh:'AI',en:'artificial intelligence'},
+];
+const IMPACT_RULES=[
+  {match:['taiwan','taipei','tsmc','strait','台灣','台海'],
+   items:[{l:'台積電↓',t:'dn'},{l:'半導體↓',t:'dn'},{l:'黃金↑',t:'up'},{l:'美債↑',t:'up'},{l:'台幣波動',t:'vol'}]},
+  {match:['red sea','houthi','yemen','hormuz','iran'],
+   items:[{l:'原油↑',t:'up'},{l:'天然氣↑',t:'up'},{l:'航運↑',t:'up'},{l:'黃金↑',t:'up'}]},
+  {match:['ukraine','russia','putin','kremlin'],
+   items:[{l:'天然氣↑',t:'up'},{l:'小麥↑',t:'up'},{l:'黃金↑',t:'up'},{l:'歐元↓',t:'dn'}]},
+  {match:['israel','gaza','hamas','hezbollah'],
+   items:[{l:'原油波動',t:'vol'},{l:'黃金↑',t:'up'},{l:'以股↓',t:'dn'}]},
+  {match:['china','beijing','xi jinping','pla','ccp'],
+   items:[{l:'港股↓',t:'dn'},{l:'A股波動',t:'vol'},{l:'台幣↓',t:'dn'}]},
+  {match:['tariff','trade war','sanction'],
+   items:[{l:'受制股↓',t:'dn'},{l:'美元↑',t:'up'},{l:'黃金↑',t:'up'}]},
+  {match:['fed','federal reserve','interest rate','fomc'],
+   items:[{l:'美股波動',t:'vol'},{l:'美元波動',t:'vol'},{l:'黃金反向',t:'vol'}]},
+  {match:['earthquake','tsunami','typhoon','hurricane','flood','volcano','disaster'],
+   items:[{l:'當地股↓',t:'dn'},{l:'黃金↑',t:'up'},{l:'建材股↑',t:'up'}]},
+  {match:['oil','opec','petroleum','crude'],
+   items:[{l:'能源股波動',t:'vol'},{l:'航空↓',t:'dn'}]},
+  {match:['north korea','pyongyang','missile'],
+   items:[{l:'韓股↓',t:'dn'},{l:'黃金↑',t:'up'},{l:'日圓升',t:'up'}]},
+];
+const CAT_CLR={war:'#ff2244',disaster:'#ff6020',economic:'#f5d800',policy:'#00c8f8',market:'#00e87a'};
+const CAT_ZH={war:'衝突戰爭',disaster:'災害人禍',economic:'經濟危機',policy:'重大政策',market:'市場事件'};
+
+// ═══════════════════════════════
+// 地理對照表
+// ═══════════════════════════════
+const GEO=[
+  {k:['ukraine','kyiv','kharkiv','zaporizhzhia'],lat:49.0,lng:32.0,loc:'烏克蘭'},
+  {k:['russia','moscow','kremlin','putin'],lat:55.7,lng:37.6,loc:'莫斯科'},
+  {k:['gaza','hamas','rafah','west bank','israel','idf'],lat:31.5,lng:34.5,loc:'以色列/加薩'},
+  {k:['lebanon','beirut','hezbollah'],lat:33.8,lng:35.5,loc:'黎巴嫩'},
+  {k:['iran','tehran','irgc'],lat:35.7,lng:51.4,loc:'伊朗'},
+  {k:['red sea','houthi','yemen'],lat:15.5,lng:43.0,loc:'紅海/葉門'},
+  {k:['sudan','khartoum','rsf'],lat:15.5,lng:32.5,loc:'蘇丹'},
+  {k:['myanmar','burma','junta'],lat:16.8,lng:96.1,loc:'緬甸'},
+  {k:['syria','damascus'],lat:33.5,lng:36.3,loc:'敘利亞'},
+  {k:['iraq','baghdad'],lat:33.3,lng:44.4,loc:'伊拉克'},
+  {k:['taiwan','taipei','tsmc','strait'],lat:25.0,lng:121.5,loc:'台北，台灣'},
+  {k:['china','beijing','xi jinping','pla','ccp','shanghai'],lat:39.9,lng:116.4,loc:'北京，中國'},
+  {k:['hong kong'],lat:22.3,lng:114.2,loc:'香港'},
+  {k:['north korea','pyongyang','kim jong'],lat:39.0,lng:125.7,loc:'北韓'},
+  {k:['south korea','seoul'],lat:37.5,lng:127.0,loc:'首爾'},
+  {k:['japan','tokyo','nikkei','yen'],lat:35.7,lng:139.7,loc:'東京，日本'},
+  {k:['philippines','manila'],lat:14.6,lng:121.0,loc:'菲律賓'},
+  {k:['indonesia','jakarta'],lat:-6.2,lng:106.8,loc:'印尼'},
+  {k:['vietnam','hanoi'],lat:21.0,lng:105.8,loc:'越南'},
+  {k:['india','delhi','mumbai','modi'],lat:28.6,lng:77.2,loc:'印度'},
+  {k:['pakistan','islamabad'],lat:33.7,lng:73.0,loc:'巴基斯坦'},
+  {k:['afghanistan','kabul'],lat:34.5,lng:69.2,loc:'阿富汗'},
+  {k:['europe','brussels','nato','ecb'],lat:50.8,lng:4.3,loc:'歐盟'},
+  {k:['germany','berlin','dax'],lat:52.5,lng:13.4,loc:'德國'},
+  {k:['france','paris','macron'],lat:48.8,lng:2.3,loc:'法國'},
+  {k:['uk','britain','london','ftse'],lat:51.5,lng:-0.1,loc:'英國'},
+  {k:['turkey','ankara','erdogan'],lat:39.9,lng:32.8,loc:'土耳其'},
+  {k:['poland','warsaw'],lat:52.2,lng:21.0,loc:'波蘭'},
+  {k:['united states','usa','trump','washington','fed'],lat:38.9,lng:-77.0,loc:'美國'},
+  {k:['new york','wall street'],lat:40.7,lng:-74.0,loc:'紐約'},
+  {k:['canada','ottawa'],lat:45.4,lng:-75.7,loc:'加拿大'},
+  {k:['mexico'],lat:19.4,lng:-99.1,loc:'墨西哥'},
+  {k:['brazil','brasilia'],lat:-15.8,lng:-47.9,loc:'巴西'},
+  {k:['saudi','riyadh','opec'],lat:24.7,lng:46.7,loc:'沙烏地'},
+  {k:['egypt','cairo'],lat:30.0,lng:31.2,loc:'埃及'},
+  {k:['south africa','johannesburg'],lat:-26.2,lng:28.0,loc:'南非'},
+  {k:['nigeria','abuja'],lat:9.1,lng:7.5,loc:'奈及利亞'},
+  {k:['ethiopia'],lat:9.0,lng:38.7,loc:'衣索比亞'},
+  {k:['congo','kinshasa'],lat:-4.3,lng:15.3,loc:'剛果'},
+  {k:['somalia','mogadishu'],lat:2.0,lng:45.3,loc:'索馬利亞'},
+  {k:['earthquake','seismic','tremor','magnitude'],lat:35.0,lng:105.0,loc:'（地震）'},
+  {k:['hurricane','typhoon','cyclone','tropical storm'],lat:20.0,lng:140.0,loc:'（熱帶氣旋）'},
+  {k:['flood','flooding'],lat:25.0,lng:90.0,loc:'（洪水）'},
+  {k:['wildfire','bushfire'],lat:37.0,lng:-120.0,loc:'（野火）'},
+  {k:['volcano','eruption'],lat:-8.0,lng:115.0,loc:'（火山）'},
+  {k:['crash','collision','derail','plane crash','train crash','ship'],lat:40.0,lng:0.0,loc:'（重大事故）'},
+  {k:['shooting','gunman','stabbing','terror','blast','explosion'],lat:40.0,lng:-74.0,loc:'（公安事件）'},
+  {k:['semiconductor','chip','wafer'],lat:25.0,lng:121.5,loc:'（半導體）'},
+  {k:['tariff','trade war'],lat:38.9,lng:-77.0,loc:'（貿易）'},
+];
+const CAT_KEYS={
+  war:['war','attack','military','troops','strike','missile','ceasefire','battle','conflict','invasion','offensive','artillery','drone','siege','casualties','hostage','hamas','hezbollah','houthi','rebel','clashes','airstrike','navy','combat'],
+  disaster:['earthquake','tsunami','flood','hurricane','typhoon','cyclone','wildfire','eruption','volcano','landslide','drought','disaster','magnitude','tremor','evacuation','death toll','collapse','bushfire',
+    'crash','collision','derail','train crash','plane crash','sinking','ferry','explosion','blast','fire kills','building collapse','mine disaster','accident kills',
+    'shooting','gunman','stabbing','terror attack','mass shooting','bombing','killed','dead','victims','casualties'],
+  economic:['economy','recession','inflation','gdp','trade','tariff','sanction','central bank','stocks fell','dollar','currency','debt','unemployment','supply chain','oil price','interest rate','imf','world bank','rate hike','semiconductor','chip'],
+  market:['stocks','shares','rally','selloff','dow','nasdaq','s&p','nikkei','ftse','bond yields','crypto','bitcoin','gold price','oil price','forex','earnings','ipo','market crash'],
+  policy:['election','vote','president','prime minister','parliament','legislation','treaty','summit','diplomatic','sanctions','agreement','government','minister','congress','coup','protest','referendum'],
+};
+
+// ═══════════════════════════════
+// 狀態
+// ═══════════════════════════════
+let EVENTS=[];
+let COUNTER=[];
+let currentCat='all';
+let searchQuery='';
+let tickerInt=null;
+let stripInts=[];
+const LAYERS={news:true,quake:true,wx:true};
+
+function toggleLayer(name){
+  LAYERS[name]=!LAYERS[name];
+  const btn=document.getElementById('layer-'+name);
+  btn.classList.toggle('on',LAYERS[name]);
+  // 重新渲染對應圖層
+  if(name==='news') renderMarkers(getFiltered());
+  if(name==='quake'){
+    quakeMarkers.forEach(m=>{
+      if(LAYERS.quake) m.addTo(map); else map.removeLayer(m);
+    });
+  }
+  if(name==='wx'){
+    wxMarkers.forEach(m=>{
+      if(LAYERS.wx) m.addTo(map); else map.removeLayer(m);
+    });
+  }
+  updateMarkerCount();
+}
+
+// ═══════════════════════════════
+// 地圖
+// ═══════════════════════════════
+const map=L.map('map',{center:[20,15],zoom:2,zoomControl:false,attributionControl:false});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(map);
+L.control.zoom({position:'bottomright'}).addTo(map);
+const markers={};
+const quakeMarkers=[];
+const wxMarkers=[];
+
+function getImpact(ev){
+  const t=((ev.titleOrig||ev.title)+'  '+(ev.detailOrig||ev.detail||'')+' '+ev.loc).toLowerCase();
+  for(const r of IMPACT_RULES) if(r.match.some(k=>t.includes(k))) return r.items;
+  return null;
+}
+function impPUHtml(items){
+  return items.map(i=>{
+    const c=i.t==='up'?'color:#00e87a;border-color:#00e87a;background:rgba(0,232,122,.07)':i.t==='dn'?'color:#ff2244;border-color:#ff2244;background:rgba(255,34,68,.07)':'color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.07)';
+    return `<span class="pu-imp" style="${c}">${i.l}</span>`;
+  }).join('');
+}
+
+function makeMarker(ev){
+  const c=CAT_CLR[ev.cat]||'#fff';
+  const s=ev.sev==='critical'?14:ev.sev==='high'?11:8;
+  const icon=L.divIcon({className:'',iconSize:[s,s],iconAnchor:[s/2,s/2],
+    html:`<div class="pm" style="width:${s}px;height:${s}px"><div class="pm-ring" style="background:${c};opacity:.35"></div><div class="pm-dot" style="background:${c};box-shadow:0 0 6px ${c}88"></div></div>`});
+  const impacts=getImpact(ev);
+  const impHtml=impacts?`<div class="pu-impact"><div class="pu-impact-label">▸ 市場影響</div><div class="pu-imp-row">${impPUHtml(impacts)}</div></div>`:'';
+  const link=ev.link?`<a href="${ev.link}" target="_blank">▸ 原文</a>`:'';
+  return L.marker([ev.lat,ev.lng],{icon}).bindPopup(
+    `<div class="pu-type" style="color:${c}">${CAT_ZH[ev.cat]||ev.cat} · ${ev.source||''}</div>`+
+    `<div class="pu-title">${ev.title}</div>`+
+    `<div class="pu-loc">📍 ${ev.loc}</div>`+
+    (ev.detail?`<div class="pu-body">${ev.detail.slice(0,150)}</div>`:'')+
+    impHtml+
+    `<div class="pu-foot"><span>⏱ ${ev.time||''}</span>${link}</div>`);
+}
+
+function updateMarkerCount(){
+  const n=Object.keys(markers).length+(LAYERS.quake?quakeMarkers.length:0)+(LAYERS.wx?wxMarkers.length:0);
+  document.getElementById('shown-count').textContent=n;
+}
+
+function renderMarkers(evs){
+  Object.values(markers).forEach(m=>map.removeLayer(m));
+  Object.keys(markers).forEach(k=>delete markers[k]);
+  if(LAYERS.news){
+    evs.forEach(ev=>{if(ev.lat&&ev.lng) markers[ev.id]=makeMarker(ev).addTo(map);});
+  }
+  updateMarkerCount();
+}
+
+// ═══════════════════════════════
+// 市場分頁切換（含懶載入自訂分頁）
+// ═══════════════════════════════
+function switchMkt(idx){
+  document.querySelectorAll('.mkt-tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
+  document.querySelectorAll('.mkt-pane').forEach((p,i)=>p.classList.toggle('on',i===idx));
+  if(idx===1){
+    const el=document.getElementById('custom-comm-rows');
+    if(el&&el.children[0]?.textContent.includes('載入')) loadCustomCommodities();
+  }
+  if(idx===3){
+    const el=document.getElementById('econ-cal-rows');
+    if(el&&el.children[0]?.textContent.includes('載入')) loadEconCalendar();
+  }
+}
+
+// ═══════════════════════════════
+// 經濟日曆（Forex Factory，伺服器直連）
+// ═══════════════════════════════
+async function loadEconCalendar(){
+  const el=document.getElementById('econ-cal-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+  let events=null;
+  // 直連（伺服器上不受CORS限制）
+  try{
+    const res=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json',{signal:AbortSignal.timeout(10000)});
+    if(res.ok){ events=await res.json(); dbg('FF日曆直連成功','ok'); }
+  }catch(e){ dbg('FF直連失敗:'+e.message,'warn'); }
+  // 備用代理
+  if(!events){
+    try{
+      const t=await fetchWithProxy('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+      if(t){ events=JSON.parse(t); dbg('FF日曆代理成功','ok'); }
+    }catch(e){ dbg('FF代理失敗:'+e.message,'warn'); }
+  }
+  if(!events){
+    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">日曆載入失敗，請稍後再試</div>';
+    return;
+  }
+  const imp=events
+    .filter(e=>e.impact==='High'||(e.impact==='Medium'&&['USD','TWD','CNY','JPY','EUR'].includes(e.currency)))
+    .filter(e=>['USD','TWD','CNY','JPY','EUR','GBP','KRW','AUD','CAD'].includes(e.currency))
+    .slice(0,25);
+  if(!imp.length){ el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>'; return; }
+  el.innerHTML=imp.map(ev=>{
+    const dot=ev.impact==='High'?'🔴':ev.impact==='Medium'?'🟡':'⚪';
+    const hasA=ev.actual&&ev.actual.trim()!=='';
+    const right=hasA?`<span class="cal-actual cmkt-up">${ev.actual}</span>`:
+                ev.forecast?`<span class="cal-actual" style="color:var(--dim)">${ev.forecast}</span>`:
+                `<span class="cal-actual" style="color:var(--dim)">—</span>`;
+    const prev=ev.previous?`<span class="cal-prev">${ev.previous}</span>`:'<span class="cal-prev"></span>';
+    let ds='';try{const d=new Date(ev.date);ds=(d.getMonth()+1)+'/'+(d.getDate());}catch(e2){}
+    return `<div class="cal-row"><span class="cal-imp">${dot}</span><span class="cal-flag">${ev.currency}</span><span class="cal-title">${ev.title.slice(0,26)}</span><span class="cal-time">${ds} ${ev.time||''}</span>${right}${prev}</div>`;
+  }).join('');
+  dbg(`FF日曆 ${imp.length} 筆`,'ok');
+}
+
+// ═══════════════════════════════
+// 渲染
+// ═══════════════════════════════
+function getFiltered(){
+  let evs=currentCat==='all'?EVENTS:EVENTS.filter(e=>e.cat===currentCat);
+  if(searchQuery.trim()){
+    const q=searchQuery.trim().toLowerCase();
+    evs=evs.filter(e=>(e.title||'').toLowerCase().includes(q)||(e.detail||'').toLowerCase().includes(q)||(e.loc||'').toLowerCase().includes(q));
+  }
+  return evs;
+}
+
+function renderEventList(){
+  const evs=getFiltered();
+  document.getElementById('ev-total').textContent=EVENTS.length;
+  document.getElementById('ev-shown').textContent=evs.length;
+  const el=document.getElementById('ev-list');
+  el.innerHTML=evs.length===0?'<div style="padding:14px 12px;font-size:11px;color:var(--dim)">無符合條件的事件</div>':
+    evs.map(ev=>{
+      const c=CAT_CLR[ev.cat]||'#fff';
+      const impacts=getImpact(ev);
+      let cls='';
+      if(ev.alertMatch&&ev.alertMatch.length) cls='alert-hit';
+      else if(impacts) cls='has-impact';
+      const title=ev.alertMatch?hlKW(ev.title):ev.title;
+      return `<div class="ev-item ${cls}" onclick="zoomTo('${ev.id}')">
+        <div class="ev-tag" style="color:${c}">${ev.source||CAT_ZH[ev.cat]} · ${(ev.sev||'').toUpperCase()}${impacts?' ◈':''}</div>
+        <div class="ev-title">${title}</div>
+        <div class="ev-foot"><span>📍 ${ev.loc}</span><span>${ev.time||''}</span></div>
+      </div>`;
+    }).join('');
+  document.getElementById('total-badge').textContent=EVENTS.length;
+  document.getElementById('ev-count').textContent=`${EVENTS.length} 則`;
+  const crit=EVENTS.filter(e=>e.sev==='critical').length;
+  document.getElementById('threat-level').textContent=
+    EVENTS.length?`威脅：${crit>=5?'🔴極高':crit>=3?'🟠高':crit>=1?'🟡中':'🟢低'}`:'威脅：—';
+}
+
+function hlKW(text){
+  let t=text;
+  ALERT_KW.forEach(kw=>{
+    if(kw.zh==='AI') t=t.replace(/\bAI\b/g,`<span class="kw-hit">AI</span>`);
+    else t=t.replace(new RegExp(kw.zh,'g'),`<span class="kw-hit">${kw.zh}</span>`);
+  });
+  return t;
+}
+
+function renderAlerts(){
+  const hits=EVENTS.filter(e=>e.alertMatch&&e.alertMatch.length);
+  document.getElementById('alert-badge').textContent=hits.length;
+  const el=document.getElementById('alert-list');
+  el.innerHTML=!hits.length?'<div style="padding:7px 12px;font-size:10px;color:var(--dim)">目前無命中關鍵字</div>':
+    hits.map(ev=>`<div class="alert-item" onclick="zoomTo('${ev.id}')">
+      <div class="alert-kw">⚑ ${ev.alertMatch.join(' · ')}</div>
+      <div class="alert-title">${ev.title}</div>
+      <div class="alert-src">${ev.source||''} · ${ev.time||''}</div>
+    </div>`).join('');
+}
+
+function renderCounter(){
+  document.getElementById('counter-badge').textContent=COUNTER.length;
+  const feed=document.getElementById('counter-feed');
+  feed.innerHTML=!COUNTER.length?'<div style="padding:10px 12px;font-size:11px;color:var(--dim);line-height:2">CGTN · 環球時報 · RT<br>Press TV · Sputnik<br><br>點「對照視角」載入</div>':
+    COUNTER.slice(0,25).map(ev=>{
+      const c=ev.srcColor||'#dc2626';
+      const link=ev.link?`<a class="counter-link" href="${ev.link}" target="_blank">▸ 原文</a>`:'';
+      return `<div class="counter-item">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
+          <span class="counter-src" style="color:${c}">${ev.source}</span>
+          <span class="counter-time">${ev.time||''}</span>
+        </div>
+        <div class="counter-body">${ev.title}</div>${link}
+      </div>`;
+    }).join('');
+}
+
+function renderTicker(){
+  const all=[...EVENTS,...COUNTER].slice(0,15);
+  const items=all.map(e=>`<span class="ti"><b>${e.source||''}</b>${e.title}</span>`).join('');
+  const t=document.getElementById('ticker-inner');
+  if(!items){t.innerHTML='　全球情報監控系統 ▸ 點擊刷新取得即時資訊';return;}
+  t.innerHTML=items+items;
+  if(tickerInt) clearInterval(tickerInt);
+  let pos=0;
+  const half=()=>t.scrollWidth/2;
+  tickerInt=setInterval(()=>{pos+=0.5;if(pos>=half())pos=0;t.style.transform=`translateX(-${pos}px)`;},16);
+}
+
+function filterCat(cat){
+  currentCat=cat;
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.toggle('on',t.dataset.c===cat));
+  const evs=getFiltered();
+  renderMarkers(evs);
+  renderEventList();
+}
+
+function onSearch(){
+  searchQuery=document.getElementById('search-input').value;
+  filterCat(currentCat);
+}
+
+function zoomTo(id){
+  const ev=EVENTS.find(e=>String(e.id)===String(id));
+  if(!ev||!ev.lat) return;
+  map.flyTo([ev.lat,ev.lng],5,{duration:1.2});
+  setTimeout(()=>{if(markers[id]) markers[id].openPopup();},1300);
+  const impacts=getImpact(ev);
+  if(impacts) showImpact(ev.title,impacts);
+}
+
+function showImpact(title,items){
+  document.getElementById('impact-title').textContent='市場影響：'+title.slice(0,28)+'...';
+  document.getElementById('impact-items').innerHTML=items.map(i=>{
+    const cls=i.t==='up'?'imp-up':i.t==='dn'?'imp-dn':'imp-vol';
+    return `<span class="imp ${cls}">${i.l}</span>`;
+  }).join('');
+  document.getElementById('impact-box').classList.add('show');
+}
+function closeImpact(){document.getElementById('impact-box').classList.remove('show');}
+
+// ═══════════════════════════════
+// 分類 / 輔助
+// ═══════════════════════════════
+function classify(text){
+  const t=text.toLowerCase();
+  for(const [cat,keys] of Object.entries(CAT_KEYS)) if(keys.some(k=>t.includes(k))) return cat;
+  return 'policy';
+}
+function severity(text){
+  const t=text.toLowerCase();
+  if(['killed','dead','deaths','attack','bomb','earthquake','tsunami','crash kills','massacre','invasion','airstrike','explosion','shooting','collapsed'].some(k=>t.includes(k))) return 'critical';
+  if(['conflict','fighting','battle','flood','hurricane','typhoon','sanctions','collapse','protest','accident','fire'].some(k=>t.includes(k))) return 'high';
+  return 'medium';
+}
+function geolocate(text){
+  const t=text.toLowerCase();
+  for(const g of GEO) if(g.k.some(k=>t.includes(k))) return {lat:g.lat,lng:g.lng,loc:g.loc};
+  return null;
+}
+function checkAlerts(text){
+  const t=text.toLowerCase();
+  const hits=[];
+  ALERT_KW.forEach(kw=>{
+    if((t.includes(kw.en)||text.includes(kw.zh))&&!hits.includes(kw.zh)) hits.push(kw.zh);
+  });
+  return hits.length?hits:null;
+}
+function timeAgo(d){
+  try{
+    const ms=Date.now()-new Date(d).getTime();
+    const m=Math.floor(ms/60000);
+    if(m<1) return '剛剛';
+    if(m<60) return m+'分前';
+    const h=Math.floor(m/60);
+    if(h<24) return h+'小時前';
+    return Math.floor(h/24)+'天前';
+  }catch(e){return '';}
+}
+
+// ═══════════════════════════════
+// 除錯
+// ═══════════════════════════════
+function dbg(msg,type=''){
+  const log=document.getElementById('debug-log');
+  const ts=new Date().toTimeString().slice(0,8);
+  const c=type==='ok'?'#00e87a':type==='err'?'#ff2244':type==='warn'?'#f5a623':'#8fb8cc';
+  log.innerHTML+=`<span style="color:${c}">[${ts}] ${msg}</span>\n`;
+  log.scrollTop=log.scrollHeight;
+}
+function toggleDebug(){document.getElementById('debug-panel').classList.toggle('open');}
+function setStatus(msg,type=''){
+  const c=type==='ok'?'color:var(--green)':type==='err'?'color:var(--red)':type==='warn'?'color:var(--amber)':'';
+  document.getElementById('status-bar').innerHTML=`<span style="${c}">⬡ ${msg}</span>`;
+}
+
+// ═══════════════════════════════
+// 代理抓取
+// ═══════════════════════════════
+async function fetchWithProxy(url){
+  for(let i=0;i<PROXIES.length;i++){
+    const pu=PROXIES[i](url);
+    try{
+      const res=await fetch(pu,{signal:AbortSignal.timeout(8000)});
+      if(!res.ok){dbg(`  P${i+1} HTTP${res.status}`,'warn');continue;}
+      const text=await res.text();
+      if(text.length<80){dbg(`  P${i+1} 過短(${text.length})`,'warn');continue;}
+      dbg(`  P${i+1} 成功 ${text.length}字`,'ok');
+      return text;
+    }catch(e){dbg(`  P${i+1} 失敗:${e.message}`,'warn');}
+  }
+  return null;
+}
+function parseRSS(xml){
+  try{
+    const doc=new DOMParser().parseFromString(xml,'text/xml');
+    const items=doc.querySelectorAll('item,entry');
+    const out=[];
+    items.forEach(i=>{
+      const title=(i.querySelector('title')?.textContent||'').trim();
+      const desc=(i.querySelector('description,summary,content')?.textContent||'').replace(/<[^>]+>/g,'').trim();
+      const link=i.querySelector('link')?.textContent?.trim()||i.querySelector('link')?.getAttribute('href')||'';
+      const pub=i.querySelector('pubDate,published,updated')?.textContent||'';
+      if(title) out.push({title,desc,link,pub});
+    });
+    return out;
+  }catch(e){return [];}
+}
+
+// ═══════════════════════════════
+// 翻譯
+// ═══════════════════════════════
+async function translateZH(text){
+  if(!text||text.length<3) return text;
+  const zh=(text.match(/[\u4e00-\u9fff]/g)||[]).length;
+  if(zh/text.length>0.2) return text;
+  try{
+    const res=await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${encodeURIComponent(text.slice(0,300))}`,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok) return text;
+    const data=await res.json();
+    return data&&data[0]?data[0].map(s=>s[0]||'').join('').trim()||text:text;
+  }catch(e){return text;}
+}
+async function translateBatch(evs){
+  const B=5;
+  for(let i=0;i<evs.length;i+=B){
+    await Promise.all(evs.slice(i,i+B).map(async ev=>{
+      ev.title=await translateZH(ev.title);
+      if(ev.detail) ev.detail=await translateZH(ev.detail);
+    }));
+    setStatus(`翻譯進度 ${Math.min(i+B,evs.length)}/${evs.length}`,'warn');
+    if(i+B<evs.length) await new Promise(r=>setTimeout(r,280));
+  }
+}
+
+// ═══════════════════════════════
+// 處理 RSS
+// ═══════════════════════════════
+function processItems(items,src){
+  const out=[];
+  for(const item of items){
+    const full=item.title+' '+item.desc;
+    const geo=geolocate(full);
+    if(!geo) continue;
+    out.push({
+      id:Math.random().toString(36).slice(2),
+      cat:classify(full), sev:severity(full),
+      alertMatch:checkAlerts(full),
+      titleOrig:item.title, detailOrig:item.desc.slice(0,180),
+      title:item.title, detail:item.desc.slice(0,180),
+      loc:geo.loc, lat:geo.lat, lng:geo.lng,
+      time:timeAgo(item.pub),
+      pubDate:new Date(item.pub).getTime()||0,
+      source:src.name, link:item.link,
+    });
+  }
+  return out;
+}
+
+// ═══════════════════════════════
+// 刷新主新聞
+// ═══════════════════════════════
+async function refreshNews(){
+  const btn=document.getElementById('btn-news');
+  btn.disabled=true;btn.textContent='抓取中...';
+  setStatus('抓取 BBC/Reuters/AP/AJ/DW/France24/Nikkei...','warn');
+  dbg('═══ 刷新主新聞 ═══');
+  const allItems=[];let ok=0;
+  for(const src of RSS_MAIN){
+    dbg(`▸ ${src.name}`);
+    const text=await fetchWithProxy(src.url);
+    if(!text){dbg(`${src.name} 全部失敗`,'err');continue;}
+    const items=parseRSS(text);
+    dbg(`${src.name} 解析${items.length}則`,'ok');
+    if(!items.length) continue;
+    ok++;
+    allItems.push(...processItems(items,src));
+  }
+  if(!allItems.length){setStatus('未取得任何新聞','err');btn.disabled=false;btn.textContent='⟳ 刷新新聞';return;}
+  allItems.sort((a,b)=>b.pubDate-a.pubDate);
+  const seen=new Set();
+  const deduped=allItems.filter(i=>{const k=i.titleOrig.slice(0,50);if(seen.has(k))return false;seen.add(k);return true;});
+  const merged=[...deduped,...EVENTS];
+  const seen2=new Set();
+  EVENTS=merged.filter(i=>{const k=(i.titleOrig||i.title).slice(0,50);if(seen2.has(k))return false;seen2.add(k);return true;}).slice(0,200);
+  filterCat(currentCat);renderAlerts();renderTicker();
+  setStatus(`已抓取 ${deduped.length} 則，翻譯中...`,'warn');
+  await translateBatch(deduped);
+  EVENTS.forEach(ev=>{
+    const t=(ev.titleOrig||ev.title)+' '+(ev.detailOrig||ev.detail||'');
+    ev.alertMatch=checkAlerts(t);
+  });
+  filterCat(currentCat);renderAlerts();renderTicker();
+  setStatus(`完成 — 共 ${EVENTS.length} 則（${ok}/${RSS_MAIN.length} 來源）`,'ok');
+  btn.disabled=false;btn.textContent='⟳ 刷新新聞';
+}
+
+// ═══════════════════════════════
+// 深度搜尋
+// ═══════════════════════════════
+async function deepSearch(){
+  const q=document.getElementById('search-input').value.trim();
+  if(!q){alert('請輸入搜尋關鍵字');return;}
+  const btn=document.getElementById('btn-deep');
+  btn.disabled=true;btn.textContent='搜尋...';
+  setStatus(`深度搜尋「${q}」...`,'warn');
+  dbg(`═══ 深度搜尋：${q} ═══`);
+  const allItems=[];
+  for(const src of RSS_MAIN){
+    const text=await fetchWithProxy(src.url);
+    if(!text) continue;
+    const items=parseRSS(text).filter(i=>(i.title+' '+i.desc).toLowerCase().includes(q.toLowerCase()));
+    if(!items.length) continue;
+    dbg(`${src.name} 找到 ${items.length} 則`,'ok');
+    allItems.push(...processItems(items,src));
+  }
+  if(allItems.length){
+    setStatus(`找到 ${allItems.length} 則，翻譯中...`,'warn');
+    await translateBatch(allItems);
+    const seen=new Set(EVENTS.map(e=>(e.titleOrig||e.title).slice(0,50)));
+    const newOnes=allItems.filter(i=>!seen.has((i.titleOrig||i.title).slice(0,50)));
+    EVENTS.unshift(...newOnes);
+    EVENTS=EVENTS.slice(0,200);
+    filterCat(currentCat);renderAlerts();
+    setStatus(`深度搜尋完成，新增 ${newOnes.length} 則`,'ok');
+  }else{
+    setStatus(`「${q}」無結果`,'warn');
+  }
+  btn.disabled=false;btn.textContent='深度';
+}
+
+// ═══════════════════════════════
+// 對照視角
+// ═══════════════════════════════
+async function refreshCounter(){
+  const btn=document.getElementById('btn-counter');
+  btn.disabled=true;btn.textContent='抓取中...';
+  setStatus('抓取 CGTN/環球時報/RT/PressTV/Sputnik...','warn');
+  dbg('═══ 對照視角 ═══');
+  const all=[];let ok=0;
+  for(const src of RSS_COUNTER){
+    dbg(`▸ ${src.name}`);
+    const text=await fetchWithProxy(src.url);
+    if(!text){dbg(`${src.name} 失敗`,'err');continue;}
+    const items=parseRSS(text);
+    dbg(`${src.name} ${items.length}則`,'ok');
+    if(!items.length) continue;
+    ok++;
+    items.forEach(i=>all.push({
+      id:'c'+Math.random().toString(36).slice(2),
+      title:i.title,detail:i.desc.slice(0,150),
+      time:timeAgo(i.pub),pubDate:new Date(i.pub).getTime()||0,
+      source:src.name,srcColor:src.color,link:i.link,
+    }));
+  }
+  if(!all.length){setStatus('對照來源無資料','err');btn.disabled=false;btn.textContent='⟳ 對照視角';return;}
+  all.sort((a,b)=>b.pubDate-a.pubDate);
+  const seen=new Set();
+  COUNTER=all.filter(i=>{const k=i.title.slice(0,50);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,40);
+  renderCounter();
+  setStatus(`對照 ${COUNTER.length} 則，翻譯中...`,'warn');
+  await translateBatch(COUNTER);
+  renderCounter();renderTicker();
+  setStatus(`對照視角完成 — ${COUNTER.length} 則（${ok}/${RSS_COUNTER.length} 來源）`,'ok');
+  btn.disabled=false;btn.textContent='⟳ 對照視角';
+}
+
+// ═══════════════════════════════
+// 地震 USGS M4.0+
+// ═══════════════════════════════
+async function fetchQuakes(){
+  dbg('USGS M4.0+...');
+  try{
+    const res=await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson',{signal:AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const qs=data.features.filter(f=>f.properties.mag>=4.0).sort((a,b)=>b.properties.time-a.properties.time).slice(0,25);
+    dbg(`USGS ${qs.length} 筆`,'ok');
+    renderQuakeStrip(qs);
+    addQuakeMarkers(qs);
+  }catch(e){
+    dbg('USGS 失敗:'+e.message,'err');
+    startStrip('quake-inner','地震資料載入失敗 — 請確認網路連線');
+  }
+}
+
+function renderQuakeStrip(qs){
+  if(!qs.length){startStrip('quake-inner','過去24小時無 M4.0+ 地震紀錄');return;}
+  const items=qs.map(q=>{
+    const m=q.properties.mag.toFixed(1);
+    const p=q.properties.place||'';
+    const t=timeAgo(new Date(q.properties.time).toISOString());
+    const cls=m>=6?'q-m6':m>=5?'q-m5':'q-m4';
+    return `<span style="margin:0 20px" class="${cls}">M${m} · ${p} · ${t}</span>`;
+  }).join('<span style="color:#2a1400;margin:0 6px">|</span>');
+  startStrip('quake-inner',items+items);
+}
+
+function addQuakeMarkers(qs){
+  quakeMarkers.forEach(m=>map.removeLayer(m));quakeMarkers.length=0;
+  qs.forEach(q=>{
+    const [lng,lat]=q.geometry.coordinates;
+    const m=q.properties.mag;
+    const s=m>=6?12:m>=5?9:6;
+    const c=m>=6?'#ff2244':m>=5?'#ff6020':'#f5a623';
+    const icon=L.divIcon({className:'',iconSize:[s,s],iconAnchor:[s/2,s/2],
+      html:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:${c};opacity:.8;box-shadow:0 0 4px ${c}"></div>`});
+    const mk=L.marker([lat,lng],{icon}).bindPopup(
+      `<div class="pu-type" style="color:${c}">地震</div>`+
+      `<div class="pu-title">規模 M${m.toFixed(1)}</div>`+
+      `<div class="pu-loc">📍 ${q.properties.place||''}</div>`+
+      `<div class="pu-foot"><span>⏱ ${timeAgo(new Date(q.properties.time).toISOString())}</span>`+
+      `<a href="${q.properties.url}" target="_blank">▸ USGS</a></div>`
+    );
+    if(LAYERS.quake) mk.addTo(map);
+    quakeMarkers.push(mk);
+  });
+  updateMarkerCount();
+}
+
+// ═══════════════════════════════
+// 氣象 — GDACS 全球 + NOAA NHC 雙來源
+// ═══════════════════════════════
+async function fetchWeather(){
+  dbg('氣象：GDACS 全球 + NOAA NHC...');
+  const wxItems=[];
+
+  // ① NOAA NHC — 大西洋+太平洋熱帶氣旋（直連免代理）
+  try{
+    const res=await fetch('https://www.nhc.noaa.gov/CurrentStorms.json',{signal:AbortSignal.timeout(8000)});
+    if(res.ok){
+      const d=await res.json();
+      const storms=d.activeStorms||[];
+      dbg(`NHC ${storms.length} 個活躍氣旋`,'ok');
+      storms.forEach(s=>{
+        const cat=stormCat(s.maxWindSpeed);
+        const basin=s.basin==='al'?'大西洋':s.basin==='ep'?'東太平洋':s.basin==='cp'?'中太平洋':'太平洋';
+        wxItems.push({
+          type:'cyclone', label:`🌀 ${s.name||'氣旋'} ${cat.label}`,
+          detail:`${basin} · 風速${s.maxWindSpeed||'?'}kt · 氣壓${s.minSeaLevelPres||'?'}mb`,
+          color:cat.c, sev:cat.sev||2,
+          lat:s.latitudeNumeric, lng:s.longitudeNumeric,
+          src:'NOAA NHC', storm:s
+        });
+      });
+    }
+  }catch(e){ dbg('NHC 失敗:'+e.message,'warn'); }
+
+  // ② GDACS — 全球災害警報（熱帶氣旋+洪水+乾旱+火山）
+  try{
+    const gdacsUrl='https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC;FL;VO;DR&alertlevel=Green;Orange;Red&limit=30';
+    const res=await fetch(gdacsUrl,{signal:AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    const events=d.features||[];
+    dbg(`GDACS ${events.length} 筆活躍事件`,'ok');
+    events.forEach(ev=>{
+      const p=ev.properties||{};
+      const type=p.eventtype||'';
+      const alert=p.alertlevel||'';
+      const coord=ev.geometry?.coordinates;
+      let label='',color='',sev=1;
+      if(type==='TC'){
+        label=`🌀 ${p.name||'氣旋'} · ${p.description||'熱帶氣旋'}`;
+        color=alert==='Red'?'#ff2244':alert==='Orange'?'#ff6020':'#f5a623';
+        sev=alert==='Red'?3:alert==='Orange'?2:1;
+      }else if(type==='FL'){
+        label=`🌊 洪水 · ${p.country||''} · ${alert}警戒`;
+        color=alert==='Red'?'#ff2244':alert==='Orange'?'#3b82f6':'#60a5fa';
+        sev=alert==='Red'?3:2;
+      }else if(type==='VO'){
+        label=`🌋 火山 · ${p.name||''} · ${p.country||''}`;
+        color='#ff6020'; sev=2;
+      }else if(type==='DR'){
+        label=`🏜 乾旱 · ${p.country||''} · ${alert}警戒`;
+        color='#f5a623'; sev=1;
+      }else{ return; }
+      // 避免與 NHC 重複
+      if(type==='TC'&&wxItems.some(x=>x.type==='cyclone'&&x.storm?.name===p.name)) return;
+      wxItems.push({
+        type, label, color, sev,
+        detail:p.description||'',
+        lat:coord?coord[1]:null, lng:coord?coord[0]:null,
+        src:'GDACS'
+      });
+    });
+  }catch(e){ dbg('GDACS 失敗:'+e.message,'warn'); }
+
+  // ③ NOAA Weather Alerts RSS（美國嚴重天氣：暴雪、寒流、熱浪等）
+  try{
+    const noaaAlertUrl='https://alerts.weather.gov/cap/us.php?x=1';
+    const text=await fetchWithProxy(noaaAlertUrl);
+    if(text){
+      const doc=new DOMParser().parseFromString(text,'text/xml');
+      const entries=doc.querySelectorAll('entry');
+      let snowCount=0,coldCount=0,heatCount=0;
+      entries.forEach(e=>{
+        const title=(e.querySelector('title')?.textContent||'').toLowerCase();
+        const cap=e.querySelector('area')?.textContent||'';
+        if(title.includes('blizzard')||title.includes('winter storm')||title.includes('snow')){
+          snowCount++;
+        }else if(title.includes('wind chill')||title.includes('freeze')||title.includes('cold')){
+          coldCount++;
+        }else if(title.includes('heat')){
+          heatCount++;
+        }
+      });
+      dbg(`NOAA 美國警報：雪${snowCount} 寒${coldCount} 熱${heatCount}`,'ok');
+      if(snowCount>0) wxItems.push({type:'snow',label:`❄ 暴風雪警報 · 美國 ${snowCount} 區`,color:'#a0c4ff',sev:2,lat:40,lng:-100,src:'NOAA'});
+      if(coldCount>0) wxItems.push({type:'cold',label:`🥶 寒流/低溫警報 · 美國 ${coldCount} 區`,color:'#bfdbfe',sev:1,lat:44,lng:-95,src:'NOAA'});
+      if(heatCount>0) wxItems.push({type:'heat',label:`🌡 高溫警報 · 美國 ${heatCount} 區`,color:'#fca5a5',sev:1,lat:36,lng:-100,src:'NOAA'});
+    }
+  }catch(e){ dbg('NOAA 警報 失敗:'+e.message,'warn'); }
+
+  // 渲染
+  if(!wxItems.length){
+    startStrip('weather-inner','目前全球無活躍嚴重氣象警報 ● 最後更新：'+new Date().toTimeString().slice(0,5));
+    addWxMarkers([]);
+  }else{
+    wxItems.sort((a,b)=>b.sev-a.sev);
+    const html=wxItems.map(w=>`<span style="margin:0 20px;color:${w.color}">${w.label} · ${w.src}</span>`).join('<span style="color:#001a33;margin:0 6px">|</span>');
+    startStrip('weather-inner',html+html);
+    addWxMarkersFromItems(wxItems);
+    dbg(`氣象跑馬燈共 ${wxItems.length} 筆`,'ok');
+  }
+}
+
+function stormCat(wind){
+  if(!wind) return {label:'熱帶低氣壓',cls:'wx-td',c:'#4a7a9b',sev:1};
+  const kt=parseInt(wind);
+  if(kt>=137) return {label:'五級颶風',cls:'wx-ty5',c:'#ff2244',sev:5};
+  if(kt>=113) return {label:'四級颶風',cls:'wx-ty3',c:'#ff4444',sev:4};
+  if(kt>=96)  return {label:'三級颶風',cls:'wx-ty3',c:'#ff6020',sev:3};
+  if(kt>=83)  return {label:'二級颶風',cls:'wx-ts', c:'#f5a623',sev:3};
+  if(kt>=64)  return {label:'一級颶風',cls:'wx-ts', c:'#f5d800',sev:2};
+  if(kt>=34)  return {label:'熱帶風暴',cls:'wx-ts', c:'#60a5fa',sev:2};
+  return {label:'熱帶低氣壓',cls:'wx-td',c:'#4a7a9b',sev:1};
+}
+
+function addWxMarkersFromItems(items){
+  wxMarkers.forEach(m=>map.removeLayer(m));wxMarkers.length=0;
+  items.forEach(w=>{
+    if(!w.lat||!w.lng) return;
+    const sz=w.sev>=3?16:w.sev>=2?12:9;
+    const icon=L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+      html:`<div class="wx-marker" style="width:${sz}px;height:${sz}px;background:${w.color}33;border-color:${w.color};box-shadow:0 0 8px ${w.color}66"></div>`});
+    const mk=L.marker([w.lat,w.lng],{icon}).bindPopup(
+      `<div class="pu-type" style="color:${w.color}">氣象警報 · ${w.src}</div>`+
+      `<div class="pu-title">${w.label}</div>`+
+      (w.detail?`<div class="pu-body">${w.detail.slice(0,120)}</div>`:'')+
+      `<div class="pu-foot"><a href="https://www.gdacs.org" target="_blank">▸ 詳情</a></div>`
+    );
+    if(LAYERS.wx) mk.addTo(map);
+    wxMarkers.push(mk);
+  });
+  updateMarkerCount();
+}
+
+// 保留舊版 addWxMarkers 相容
+function addWxMarkers(storms){ addWxMarkersFromItems(storms||[]); }
+
+// ═══════════════════════════════
+// 跑馬燈工具
+// ═══════════════════════════════
+function startStrip(id,html){
+  const inner=document.getElementById(id);
+  inner.innerHTML=html;
+  // 清掉舊的 interval
+  let pos=0;
+  const tid=setInterval(()=>{
+    const half=inner.scrollWidth/2;
+    if(half<2){return;}
+    pos+=0.4;
+    if(pos>=half) pos=0;
+    inner.style.transform=`translateX(-${pos}px)`;
+  },16);
+  stripInts.push(tid);
+}
+
+// ═══════════════════════════════
+// 自訂商品資料（FRED + Stooq）
+// ═══════════════════════════════
+const COMM_FRED=[
+  {id:'VIXCLS', label:'恐慌 VIX',  fmt:v=>v.toFixed(2)},
+  {id:'GS10',   label:'美10年債',  fmt:v=>v.toFixed(2)+'%'},
+  {id:'DHHNGSP',label:'天然氣 HH', fmt:v=>'$'+v.toFixed(3)},
+];
+const COMM_STOOQ=[
+  {sym:'gc.f',   label:'黃金期貨 GC'},
+  {sym:'cl.f',   label:'原油期貨 CL'},
+  {sym:'si.f',   label:'白銀 SI'},
+  {sym:'hg.f',   label:'銅 HG'},
+  {sym:'tx.f',   label:'台指期 TX'},
+  {sym:'btcusd', label:'比特幣 BTC'},
+];
+
+async function loadCustomCommodities(){
+  const el=document.getElementById('custom-comm-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+  let html='';
+  for(const item of COMM_FRED){
+    try{
+      const res=await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${item.id}`,{signal:AbortSignal.timeout(8000)});
+      const text=await res.text();
+      const lines=text.trim().split('\n').slice(1).filter(l=>l&&l.split(',')[1]&&l.split(',')[1]!='.');
+      const vals=[];
+      for(let i=lines.length-1;i>=0&&vals.length<2;i--){
+        const p=lines[i].split(',');const v=parseFloat(p[1]);
+        if(!isNaN(v)) vals.unshift({d:p[0],v});
+      }
+      if(!vals.length) throw new Error('no data');
+      const cur=vals[vals.length-1];const prev=vals.length>1?vals[0].v:cur.v;
+      const pct=prev?((cur.v-prev)/Math.abs(prev)*100):0;const up=pct>=0;
+      html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-val">${item.fmt(cur.v)}</span><span class="${up?'cmkt-up':'cmkt-dn'}">${up?'+':''}${pct.toFixed(2)}%</span><span class="cmkt-date">${cur.d}</span></div>`;
+      dbg(`FRED ${item.id} OK: ${cur.v}`,'ok');
+    }catch(e){
+      html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-na">載入失敗</span></div>`;
+      dbg(`FRED ${item.id}:${e.message}`,'warn');
+    }
+  }
+  try{
+    const syms=COMM_STOOQ.map(s=>s.sym).join(',');
+    const text=await fetchWithProxy(`https://stooq.com/q/l/?s=${syms}&f=sd2cp&e=csv`);
+    if(text){
+      const mp={};
+      text.trim().split('\n').slice(1).forEach(l=>{
+        const p=l.split(',');const price=parseFloat(p[2]),chg=parseFloat(p[3]);
+        if(!isNaN(price)) mp[p[0].toLowerCase()]={price,chg:isNaN(chg)?0:chg};
+      });
+      dbg(`Stooq 取得: ${Object.keys(mp).join(',')}`,'ok');
+      COMM_STOOQ.forEach(item=>{
+        const d=mp[item.sym.toLowerCase()];
+        if(d){
+          const up=d.chg>=0;
+          const fmt=d.price>=100?d.price.toLocaleString('en',{maximumFractionDigits:2}):d.price.toFixed(4);
+          html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-val">${fmt}</span><span class="${up?'cmkt-up':'cmkt-dn'}">${up?'+':''}${d.chg.toFixed(2)}%</span></div>`;
+        }else{
+          html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-na">—</span></div>`;
+        }
+      });
+    }else{
+      COMM_STOOQ.forEach(i=>{html+=`<div class="cmkt-row"><span class="cmkt-name">${i.label}</span><span class="cmkt-na">代理失敗</span></div>`;});
+    }
+  }catch(e){
+    COMM_STOOQ.forEach(i=>{html+=`<div class="cmkt-row"><span class="cmkt-name">${i.label}</span><span class="cmkt-na">—</span></div>`;});
+    dbg('Stooq 失敗:'+e.message,'err');
+  }
+  el.innerHTML=html||'<div style="padding:5px 10px;font-size:9px;color:var(--red)">載入失敗</div>';
+}
+
+// ═══════════════════════════════
+// 經濟日曆（Forex Factory JSON，直連+代理雙保險）
+// ═══════════════════════════════
+async function loadEconCalendar(){
+  const el=document.getElementById('econ-cal-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+
+  const FF_URL='https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+  let events=null;
+
+  // 嘗試直連
+  try{
+    const res=await fetch(FF_URL,{signal:AbortSignal.timeout(8000)});
+    if(res.ok){ events=await res.json(); dbg('FF日曆直連成功','ok'); }
+  }catch(e){ dbg('FF日曆直連失敗:'+e.message,'warn'); }
+
+  // 直連失敗改用代理
+  if(!events){
+    try{
+      const text=await fetchWithProxy(FF_URL);
+      if(text){ events=JSON.parse(text); dbg('FF日曆代理成功','ok'); }
+    }catch(e){ dbg('FF日曆代理失敗:'+e.message,'warn'); }
+  }
+
+  // 兩個都失敗 → 嘗試備用 URL（next week）
+  if(!events){
+    try{
+      const res2=await fetch('https://nfs.faireconomy.media/ff_calendar_nextweek.json',{signal:AbortSignal.timeout(8000)});
+      if(res2.ok){ events=await res2.json(); dbg('FF日曆（下週）成功','ok'); }
+    }catch(e){ dbg('FF日曆下週也失敗','err'); }
+  }
+
+  if(!events){
+    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">日曆無法載入，請確認網路或稍後再試</div>';
+    return;
+  }
+
+  const imp=events
+    .filter(e=>e.impact==='High'||(e.impact==='Medium'&&['USD','TWD','CNY','JPY','EUR'].includes(e.currency)))
+    .filter(e=>['USD','TWD','CNY','JPY','EUR','GBP','KRW','AUD','CAD'].includes(e.currency))
+    .slice(0,20);
+
+  if(!imp.length){
+    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>';
+    return;
+  }
+
+  el.innerHTML=imp.map(ev=>{
+    const dot=ev.impact==='High'?'🔴':ev.impact==='Medium'?'🟡':'⚪';
+    const hasA=ev.actual&&ev.actual.trim()!=='';
+    const right=hasA?`<span class="cal-actual cmkt-up">${ev.actual}</span>`:
+                ev.forecast?`<span class="cal-actual" style="color:var(--dim)">${ev.forecast}</span>`:
+                `<span class="cal-actual" style="color:var(--dim)">—</span>`;
+    const prev=ev.previous?`<span class="cal-prev">${ev.previous}</span>`:'<span class="cal-prev"></span>';
+    let ds='';try{const d=new Date(ev.date);ds=(d.getMonth()+1)+'/'+(d.getDate());}catch(e2){}
+    return `<div class="cal-row"><span class="cal-imp">${dot}</span><span class="cal-flag">${ev.currency}</span><span class="cal-title">${ev.title.slice(0,26)}</span><span class="cal-time">${ds} ${ev.time||''}</span>${right}${prev}</div>`;
+  }).join('');
+  dbg(`FF日曆 ${imp.length} 筆`,'ok');
+}
+
+// ═══════════════════════════════
+// 五個時鐘
+// ═══════════════════════════════
+function tick(){
+  const n=new Date();
+  const fmt=(h,m,s)=>`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const ss=n.getUTCSeconds(),mm=n.getUTCMinutes(),uh=n.getUTCHours();
+  document.getElementById('clk-et').textContent=fmt((uh+20)%24,mm,ss); // EDT UTC-4
+  document.getElementById('clk-pt').textContent=fmt((uh+17)%24,mm,ss); // PDT UTC-7
+  document.getElementById('clk-uk').textContent=fmt((uh+1)%24,mm,ss);  // BST UTC+1
+  document.getElementById('clk-me').textContent=fmt((uh+3)%24,mm,ss);  // 以色列 UTC+3
+  document.getElementById('clk-tw').textContent=fmt((uh+8)%24,mm,ss);  // CST UTC+8
+}
+setInterval(tick,1000);tick();
+
+// ═══════════════════════════════
+// 初始化
+// ═══════════════════════════════
+filterCat('all');
+fetchQuakes();
+fetchWeather();
+dbg('系統就緒 v6.5 — GitHub Pages 版本','ok');
+dbg('指數：FOREXCOM:（台灣加權無免費授權已移除）','ok');
+dbg('商品上段：FOREXCOM黃金/油/銀/BTC | 下段點「⟳載入」= FRED+Stooq','ok');
+dbg('外匯：FOREXCOM:DXY','ok');
+dbg('經濟日曆：點「⟳載入」= Forex Factory JSON','ok');
+</script>
+</body>
+</html>
