@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -308,76 +309,68 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
             {"s":"FOREXCOM:SPXUSD","d":"S&P 500"},
             {"s":"FOREXCOM:NSXUSD","d":"NASDAQ 100"},
             {"s":"FOREXCOM:DJI","d":"道瓊"},
-            {"s":"TWSE:TWII","d":"台灣加權"},
-            {"s":"INDEX:NKY","d":"日經225"},
-            {"s":"TVC:HSI","d":"恒生指數"},
-            {"s":"INDEX:SENSEX","d":"印度SENSEX"},
-            {"s":"INDEX:KOSPI","d":"韓國KOSPI"},
-            {"s":"BATS:VNM","d":"越南ETF"},
-            {"s":"INDEX:DEU40","d":"德國DAX"},
-            {"s":"INDEX:UKX","d":"FTSE 100"}
+            {"s":"FOREXCOM:NI225","d":"日經225"},
+            {"s":"FOREXCOM:HK50","d":"恒生指數"},
+            {"s":"FOREXCOM:IN50","d":"印度NIFTY50"},
+            {"s":"FOREXCOM:KS11","d":"韓國KOSPI"},
+            {"s":"FOREXCOM:GER40","d":"德國DAX"},
+            {"s":"FOREXCOM:UK100","d":"FTSE 100"},
+            {"s":"BATS:VNM","d":"越南ETF"}
           ]}]}
           </script>
         </div>
       </div>
 
-      <!-- 分頁1：商品/指標 -->
+      <!-- 分頁1：商品/指標 — 上段TradingView + 下段FRED/Stooq -->
       <div class="mkt-pane scrollable" id="mkt-pane-1">
-        <!-- 上段：黃金/油/銀/BTC -->
         <div style="height:94px;overflow:hidden;">
           <div class="tradingview-widget-container" style="height:94px;">
             <div class="tradingview-widget-container__widget" style="height:94px;"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
             {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"94",
             "tabs":[{"title":"商品","symbols":[
-              {"s":"TVC:GOLD","d":"黃金"},
-              {"s":"TVC:USOIL","d":"WTI原油"},
-              {"s":"TVC:SILVER","d":"白銀"},
+              {"s":"FOREXCOM:XAUUSD","d":"黃金"},
+              {"s":"FOREXCOM:XTIUSD","d":"WTI原油"},
+              {"s":"FOREXCOM:XAGUSD","d":"白銀"},
               {"s":"CRYPTO:BTCUSD","d":"比特幣"}
             ]}]}
             </script>
           </div>
         </div>
-        <!-- 下段：期貨合約版本 -->
-        <div style="height:94px;overflow:hidden;">
-          <div class="tradingview-widget-container" style="height:94px;">
-            <div class="tradingview-widget-container__widget" style="height:94px;"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-            {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"94",
-            "tabs":[{"title":"指標","symbols":[
-              {"s":"CBOT:ZN1!","d":"美10年債期"},
-              {"s":"NYMEX:NG1!","d":"天然氣期"},
-              {"s":"COMEX:HG1!","d":"銅期"},
-              {"s":"CBOE:VIX","d":"恐慌VIX"}
-            ]}]}
-            </script>
-          </div>
+        <div class="cmkt-hdr">
+          <span>FRED（VIX/US10Y）· Stooq（期貨）</span>
+          <button class="cmkt-refbtn" onclick="loadCustomCommodities()">⟳ 載入</button>
         </div>
+        <div id="custom-comm-rows"><div style="padding:5px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得 VIX / 美10年債 / 天然氣 / 銅 / 台指期</div></div>
       </div>
 
       <!-- 分頁2：外匯 -->
       <div class="mkt-pane" id="mkt-pane-2">
         <div class="tradingview-widget-container" style="height:188px;">
           <div class="tradingview-widget-container__widget" style="height:188px;"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
-          {"width":"100%","height":"188","isTransparent":true,"colorTheme":"dark","locale":"zh_TW","showSymbolLogo":false,
-          "symbolsGroups":[{"name":"外匯/匯率","originalName":"Forex","symbols":[
-            {"name":"FX_IDC:USDTWD","displayName":"美元/台幣"},
-            {"name":"FX:USDJPY","displayName":"美元/日圓"},
-            {"name":"FX:EURUSD","displayName":"歐元/美元"},
-            {"name":"FX:USDCNH","displayName":"美元/人民幣"},
-            {"name":"FX:USDKRW","displayName":"美元/韓元"},
-            {"name":"FX:GBPUSD","displayName":"英鎊/美元"},
-            {"name":"FX:USDHKD","displayName":"美元/港幣"},
-            {"name":"PEPPERSTONE:DXY","displayName":"美元指數DXY"}
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+          {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"188",
+          "tabs":[{"title":"外匯","symbols":[
+            {"s":"FX_IDC:USDTWD","d":"美元/台幣"},
+            {"s":"FX:USDJPY","d":"美元/日圓"},
+            {"s":"FX:EURUSD","d":"歐元/美元"},
+            {"s":"FX:USDCNH","d":"美元/人民幣"},
+            {"s":"FX:USDKRW","d":"美元/韓元"},
+            {"s":"FX:GBPUSD","d":"英鎊/美元"},
+            {"s":"FX:USDHKD","d":"美元/港幣"},
+            {"s":"FOREXCOM:DXY","d":"美元指數DXY"}
           ]}]}
           </script>
         </div>
       </div>
 
-      <!-- 分頁3：經濟日曆 — 動態重建確保初始化 -->
-      <div class="mkt-pane" id="mkt-pane-3">
-        <div id="econ-cal-container" style="height:188px;"></div>
+      <!-- 分頁3：經濟日曆 — Forex Factory（伺服器直連） -->
+      <div class="mkt-pane scrollable" id="mkt-pane-3">
+        <div class="cmkt-hdr">
+          <span>ForexFactory 本週重大事件</span>
+          <button class="cmkt-refbtn" onclick="loadEconCalendar()">⟳ 載入</button>
+        </div>
+        <div id="econ-cal-rows"><div style="padding:8px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得本週非農/CPI/FOMC等重大事件</div></div>
       </div>
     </div>
 
@@ -626,31 +619,56 @@ function renderMarkers(evs){
 function switchMkt(idx){
   document.querySelectorAll('.mkt-tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
   document.querySelectorAll('.mkt-pane').forEach((p,i)=>p.classList.toggle('on',i===idx));
-  if(idx===3) buildEconCal();
+  if(idx===1){
+    const el=document.getElementById('custom-comm-rows');
+    if(el&&el.children[0]?.textContent.includes('載入')) loadCustomCommodities();
+  }
+  if(idx===3){
+    const el=document.getElementById('econ-cal-rows');
+    if(el&&el.children[0]?.textContent.includes('載入')) loadEconCalendar();
+  }
 }
 
-function buildEconCal(){
-  const c=document.getElementById('econ-cal-container');
-  if(!c||c.dataset.built) return;
-  c.dataset.built='1';
-  const wrap=document.createElement('div');
-  wrap.className='tradingview-widget-container';
-  wrap.style.height='188px';
-  const w=document.createElement('div');
-  w.className='tradingview-widget-container__widget';
-  w.style.height='188px';
-  wrap.appendChild(w);
-  const s=document.createElement('script');
-  s.src='https://s3.tradingview.com/external-embedding/embed-widget-economic-calendar.js';
-  s.async=true;
-  s.innerHTML=JSON.stringify({
-    colorTheme:'dark',isTransparent:true,locale:'zh_TW',
-    width:'100%',height:'188',importanceFilter:'0,1',
-    countryFilter:'us,tw,cn,jp,eu,gb,kr,de,fr,au,ca'
-  });
-  wrap.appendChild(s);
-  c.appendChild(wrap);
-  dbg('經濟日曆 widget 動態建立','ok');
+// ═══════════════════════════════
+// 經濟日曆（Forex Factory，伺服器直連）
+// ═══════════════════════════════
+async function loadEconCalendar(){
+  const el=document.getElementById('econ-cal-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+  let events=null;
+  // 直連（伺服器上不受CORS限制）
+  try{
+    const res=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json',{signal:AbortSignal.timeout(10000)});
+    if(res.ok){ events=await res.json(); dbg('FF日曆直連成功','ok'); }
+  }catch(e){ dbg('FF直連失敗:'+e.message,'warn'); }
+  // 備用代理
+  if(!events){
+    try{
+      const t=await fetchWithProxy('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+      if(t){ events=JSON.parse(t); dbg('FF日曆代理成功','ok'); }
+    }catch(e){ dbg('FF代理失敗:'+e.message,'warn'); }
+  }
+  if(!events){
+    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">日曆載入失敗，請稍後再試</div>';
+    return;
+  }
+  const imp=events
+    .filter(e=>e.impact==='High'||(e.impact==='Medium'&&['USD','TWD','CNY','JPY','EUR'].includes(e.currency)))
+    .filter(e=>['USD','TWD','CNY','JPY','EUR','GBP','KRW','AUD','CAD'].includes(e.currency))
+    .slice(0,25);
+  if(!imp.length){ el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>'; return; }
+  el.innerHTML=imp.map(ev=>{
+    const dot=ev.impact==='High'?'🔴':ev.impact==='Medium'?'🟡':'⚪';
+    const hasA=ev.actual&&ev.actual.trim()!=='';
+    const right=hasA?`<span class="cal-actual cmkt-up">${ev.actual}</span>`:
+                ev.forecast?`<span class="cal-actual" style="color:var(--dim)">${ev.forecast}</span>`:
+                `<span class="cal-actual" style="color:var(--dim)">—</span>`;
+    const prev=ev.previous?`<span class="cal-prev">${ev.previous}</span>`:'<span class="cal-prev"></span>';
+    let ds='';try{const d=new Date(ev.date);ds=(d.getMonth()+1)+'/'+(d.getDate());}catch(e2){}
+    return `<div class="cal-row"><span class="cal-imp">${dot}</span><span class="cal-flag">${ev.currency}</span><span class="cal-title">${ev.title.slice(0,26)}</span><span class="cal-time">${ds} ${ev.time||''}</span>${right}${prev}</div>`;
+  }).join('');
+  dbg(`FF日曆 ${imp.length} 筆`,'ok');
 }
 
 // ═══════════════════════════════
@@ -1385,11 +1403,11 @@ setInterval(tick,1000);tick();
 filterCat('all');
 fetchQuakes();
 fetchWeather();
-dbg('系統就緒 v6.4','ok');
-dbg('商品：TradingView 上段（金/油/銀/BTC）+ 下段（VIX/US10Y/NatGas/銅）','ok');
-dbg('外匯：DXY改用 PEPPERSTONE:DXY','ok');
-dbg('經濟日曆：Investing.com iframe 直嵌（不受CORS/widget限制）','ok');
-dbg('氣象跑馬燈：圖層按鈕移至 bottom:10px 不再遮擋','ok');
+dbg('系統就緒 v6.5 — GitHub Pages 版本','ok');
+dbg('指數：FOREXCOM:（台灣加權無免費授權已移除）','ok');
+dbg('商品上段：FOREXCOM黃金/油/銀/BTC | 下段點「⟳載入」= FRED+Stooq','ok');
+dbg('外匯：FOREXCOM:DXY','ok');
+dbg('經濟日曆：點「⟳載入」= Forex Factory JSON','ok');
 </script>
 </body>
 </html>
