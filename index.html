@@ -299,29 +299,32 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
         <div class="mkt-tab" onclick="switchMkt(3)">經濟日曆</div>
       </div>
 
-      <!-- 分頁0：指數 -->
-      <div class="mkt-pane on" id="mkt-pane-0">
-        <div class="tradingview-widget-container" style="height:188px;">
-          <div class="tradingview-widget-container__widget" style="height:188px;"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-          {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"188",
-          "tabs":[{"title":"指數","symbols":[
-            {"s":"FOREXCOM:SPXUSD","d":"S&P 500"},
-            {"s":"FOREXCOM:NSXUSD","d":"NASDAQ 100"},
-            {"s":"FOREXCOM:DJI","d":"道瓊"},
-            {"s":"FOREXCOM:NI225","d":"日經225"},
-            {"s":"FOREXCOM:HK50","d":"恒生指數"},
-            {"s":"FOREXCOM:IN50","d":"印度NIFTY50"},
-            {"s":"FOREXCOM:KS11","d":"韓國KOSPI"},
-            {"s":"FOREXCOM:GER40","d":"德國DAX"},
-            {"s":"FOREXCOM:UK100","d":"FTSE 100"},
-            {"s":"BATS:VNM","d":"越南ETF"}
-          ]}]}
-          </script>
+      <!-- 分頁0：指數 — TradingView(美歐) + Yahoo Finance(亞洲) -->
+      <div class="mkt-pane scrollable on" id="mkt-pane-0">
+        <div style="height:110px;overflow:hidden;">
+          <div class="tradingview-widget-container" style="height:110px;">
+            <div class="tradingview-widget-container__widget" style="height:110px;"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"110",
+            "tabs":[{"title":"美歐指數","symbols":[
+              {"s":"FOREXCOM:SPXUSD","d":"S&P 500"},
+              {"s":"FOREXCOM:NSXUSD","d":"NASDAQ 100"},
+              {"s":"FOREXCOM:DJI","d":"道瓊"},
+              {"s":"FOREXCOM:GER40","d":"德國DAX"},
+              {"s":"FOREXCOM:UK100","d":"FTSE 100"},
+              {"s":"BATS:VNM","d":"越南ETF"}
+            ]}]}
+            </script>
+          </div>
         </div>
+        <div class="cmkt-hdr">
+          <span>亞洲指數（Yahoo Finance）</span>
+          <button class="cmkt-refbtn" onclick="loadYFIndices()">⟳ 載入</button>
+        </div>
+        <div id="yf-indices-rows"><div style="padding:4px 10px;font-size:9px;color:var(--amber)">點「⟳ 載入」取得 台灣加權 / 台指期 / 日經 / 恒生 / KOSPI</div></div>
       </div>
 
-      <!-- 分頁1：商品/指標 — 上段TradingView + 下段FRED/Stooq -->
+      <!-- 分頁1：商品/指標 — TradingView(金油銀BTC) + Yahoo Finance(VIX/US10Y/NatGas/銅) -->
       <div class="mkt-pane scrollable" id="mkt-pane-1">
         <div style="height:94px;overflow:hidden;">
           <div class="tradingview-widget-container" style="height:94px;">
@@ -338,39 +341,41 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
           </div>
         </div>
         <div class="cmkt-hdr">
-          <span>FRED（VIX/US10Y）· Stooq（期貨）</span>
+          <span>指標/期貨（Yahoo Finance）</span>
           <button class="cmkt-refbtn" onclick="loadCustomCommodities()">⟳ 載入</button>
         </div>
-        <div id="custom-comm-rows"><div style="padding:5px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得 VIX / 美10年債 / 天然氣 / 銅 / 台指期</div></div>
+        <div id="custom-comm-rows"><div style="padding:4px 10px;font-size:9px;color:var(--amber)">點「⟳ 載入」取得 VIX / 美10年債 / 天然氣 / 銅 / 台指期</div></div>
       </div>
 
-      <!-- 分頁2：外匯 -->
-      <div class="mkt-pane" id="mkt-pane-2">
-        <div class="tradingview-widget-container" style="height:188px;">
-          <div class="tradingview-widget-container__widget" style="height:188px;"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-          {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"188",
-          "tabs":[{"title":"外匯","symbols":[
-            {"s":"FX_IDC:USDTWD","d":"美元/台幣"},
-            {"s":"FX:USDJPY","d":"美元/日圓"},
-            {"s":"FX:EURUSD","d":"歐元/美元"},
-            {"s":"FX:USDCNH","d":"美元/人民幣"},
-            {"s":"FX:USDKRW","d":"美元/韓元"},
-            {"s":"FX:GBPUSD","d":"英鎊/美元"},
-            {"s":"FX:USDHKD","d":"美元/港幣"},
-            {"s":"FOREXCOM:DXY","d":"美元指數DXY"}
-          ]}]}
-          </script>
+      <!-- 分頁2：外匯 — TradingView(FX對) + Yahoo Finance(DXY) -->
+      <div class="mkt-pane scrollable" id="mkt-pane-2">
+        <div style="height:148px;overflow:hidden;">
+          <div class="tradingview-widget-container" style="height:148px;">
+            <div class="tradingview-widget-container__widget" style="height:148px;"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {"colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"zh_TW","isTransparent":true,"showSymbolLogo":false,"width":"100%","height":"148",
+            "tabs":[{"title":"外匯","symbols":[
+              {"s":"FX_IDC:USDTWD","d":"美元/台幣"},
+              {"s":"FX:USDJPY","d":"美元/日圓"},
+              {"s":"FX:EURUSD","d":"歐元/美元"},
+              {"s":"FX:USDCNH","d":"美元/人民幣"},
+              {"s":"FX:USDKRW","d":"美元/韓元"},
+              {"s":"FX:GBPUSD","d":"英鎊/美元"},
+              {"s":"FX:USDHKD","d":"美元/港幣"}
+            ]}]}
+            </script>
+          </div>
         </div>
+        <div id="yf-dxy-rows"><div style="padding:4px 10px;font-size:9px;color:var(--amber)">DXY 載入中...</div></div>
       </div>
 
-      <!-- 分頁3：經濟日曆 — Forex Factory（伺服器直連） -->
+      <!-- 分頁3：經濟日曆 — Forex Factory JSON -->
       <div class="mkt-pane scrollable" id="mkt-pane-3">
         <div class="cmkt-hdr">
           <span>ForexFactory 本週重大事件</span>
           <button class="cmkt-refbtn" onclick="loadEconCalendar()">⟳ 載入</button>
         </div>
-        <div id="econ-cal-rows"><div style="padding:8px 10px;font-size:9px;color:var(--amber)">點上方「⟳ 載入」取得本週非農/CPI/FOMC等重大事件</div></div>
+        <div id="econ-cal-rows"><div style="padding:8px 10px;font-size:9px;color:var(--amber)">點「⟳ 載入」取得本週非農/CPI/FOMC等重大事件</div></div>
       </div>
     </div>
 
@@ -619,56 +624,10 @@ function renderMarkers(evs){
 function switchMkt(idx){
   document.querySelectorAll('.mkt-tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
   document.querySelectorAll('.mkt-pane').forEach((p,i)=>p.classList.toggle('on',i===idx));
-  if(idx===1){
-    const el=document.getElementById('custom-comm-rows');
-    if(el&&el.children[0]?.textContent.includes('載入')) loadCustomCommodities();
-  }
-  if(idx===3){
-    const el=document.getElementById('econ-cal-rows');
-    if(el&&el.children[0]?.textContent.includes('載入')) loadEconCalendar();
-  }
-}
-
-// ═══════════════════════════════
-// 經濟日曆（Forex Factory，伺服器直連）
-// ═══════════════════════════════
-async function loadEconCalendar(){
-  const el=document.getElementById('econ-cal-rows');
-  if(!el) return;
-  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
-  let events=null;
-  // 直連（伺服器上不受CORS限制）
-  try{
-    const res=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json',{signal:AbortSignal.timeout(10000)});
-    if(res.ok){ events=await res.json(); dbg('FF日曆直連成功','ok'); }
-  }catch(e){ dbg('FF直連失敗:'+e.message,'warn'); }
-  // 備用代理
-  if(!events){
-    try{
-      const t=await fetchWithProxy('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
-      if(t){ events=JSON.parse(t); dbg('FF日曆代理成功','ok'); }
-    }catch(e){ dbg('FF代理失敗:'+e.message,'warn'); }
-  }
-  if(!events){
-    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">日曆載入失敗，請稍後再試</div>';
-    return;
-  }
-  const imp=events
-    .filter(e=>e.impact==='High'||(e.impact==='Medium'&&['USD','TWD','CNY','JPY','EUR'].includes(e.currency)))
-    .filter(e=>['USD','TWD','CNY','JPY','EUR','GBP','KRW','AUD','CAD'].includes(e.currency))
-    .slice(0,25);
-  if(!imp.length){ el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>'; return; }
-  el.innerHTML=imp.map(ev=>{
-    const dot=ev.impact==='High'?'🔴':ev.impact==='Medium'?'🟡':'⚪';
-    const hasA=ev.actual&&ev.actual.trim()!=='';
-    const right=hasA?`<span class="cal-actual cmkt-up">${ev.actual}</span>`:
-                ev.forecast?`<span class="cal-actual" style="color:var(--dim)">${ev.forecast}</span>`:
-                `<span class="cal-actual" style="color:var(--dim)">—</span>`;
-    const prev=ev.previous?`<span class="cal-prev">${ev.previous}</span>`:'<span class="cal-prev"></span>';
-    let ds='';try{const d=new Date(ev.date);ds=(d.getMonth()+1)+'/'+(d.getDate());}catch(e2){}
-    return `<div class="cal-row"><span class="cal-imp">${dot}</span><span class="cal-flag">${ev.currency}</span><span class="cal-title">${ev.title.slice(0,26)}</span><span class="cal-time">${ds} ${ev.time||''}</span>${right}${prev}</div>`;
-  }).join('');
-  dbg(`FF日曆 ${imp.length} 筆`,'ok');
+  if(idx===0) loadYFIndices();
+  if(idx===1) loadCustomCommodities();
+  if(idx===2) loadYFDxy();
+  if(idx===3) loadEconCalendar();
 }
 
 // ═══════════════════════════════
@@ -1250,125 +1209,100 @@ function startStrip(id,html){
 }
 
 // ═══════════════════════════════
-// 自訂商品資料（FRED + Stooq）
+// Yahoo Finance — 核心抓取函式
 // ═══════════════════════════════
-const COMM_FRED=[
-  {id:'VIXCLS', label:'恐慌 VIX',  fmt:v=>v.toFixed(2)},
-  {id:'GS10',   label:'美10年債',  fmt:v=>v.toFixed(2)+'%'},
-  {id:'DHHNGSP',label:'天然氣 HH', fmt:v=>'$'+v.toFixed(3)},
-];
-const COMM_STOOQ=[
-  {sym:'gc.f',   label:'黃金期貨 GC'},
-  {sym:'cl.f',   label:'原油期貨 CL'},
-  {sym:'si.f',   label:'白銀 SI'},
-  {sym:'hg.f',   label:'銅 HG'},
-  {sym:'tx.f',   label:'台指期 TX'},
-  {sym:'btcusd', label:'比特幣 BTC'},
-];
-
-async function loadCustomCommodities(){
-  const el=document.getElementById('custom-comm-rows');
-  if(!el) return;
-  el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
-  let html='';
-  for(const item of COMM_FRED){
-    try{
-      const res=await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${item.id}`,{signal:AbortSignal.timeout(8000)});
-      const text=await res.text();
-      const lines=text.trim().split('\n').slice(1).filter(l=>l&&l.split(',')[1]&&l.split(',')[1]!='.');
-      const vals=[];
-      for(let i=lines.length-1;i>=0&&vals.length<2;i--){
-        const p=lines[i].split(',');const v=parseFloat(p[1]);
-        if(!isNaN(v)) vals.unshift({d:p[0],v});
-      }
-      if(!vals.length) throw new Error('no data');
-      const cur=vals[vals.length-1];const prev=vals.length>1?vals[0].v:cur.v;
-      const pct=prev?((cur.v-prev)/Math.abs(prev)*100):0;const up=pct>=0;
-      html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-val">${item.fmt(cur.v)}</span><span class="${up?'cmkt-up':'cmkt-dn'}">${up?'+':''}${pct.toFixed(2)}%</span><span class="cmkt-date">${cur.d}</span></div>`;
-      dbg(`FRED ${item.id} OK: ${cur.v}`,'ok');
-    }catch(e){
-      html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-na">載入失敗</span></div>`;
-      dbg(`FRED ${item.id}:${e.message}`,'warn');
-    }
-  }
+async function fetchYahooFinance(symbols){
+  const url=`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,shortName`;
   try{
-    const syms=COMM_STOOQ.map(s=>s.sym).join(',');
-    const text=await fetchWithProxy(`https://stooq.com/q/l/?s=${syms}&f=sd2cp&e=csv`);
-    if(text){
-      const mp={};
-      text.trim().split('\n').slice(1).forEach(l=>{
-        const p=l.split(',');const price=parseFloat(p[2]),chg=parseFloat(p[3]);
-        if(!isNaN(price)) mp[p[0].toLowerCase()]={price,chg:isNaN(chg)?0:chg};
-      });
-      dbg(`Stooq 取得: ${Object.keys(mp).join(',')}`,'ok');
-      COMM_STOOQ.forEach(item=>{
-        const d=mp[item.sym.toLowerCase()];
-        if(d){
-          const up=d.chg>=0;
-          const fmt=d.price>=100?d.price.toLocaleString('en',{maximumFractionDigits:2}):d.price.toFixed(4);
-          html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-val">${fmt}</span><span class="${up?'cmkt-up':'cmkt-dn'}">${up?'+':''}${d.chg.toFixed(2)}%</span></div>`;
-        }else{
-          html+=`<div class="cmkt-row"><span class="cmkt-name">${item.label}</span><span class="cmkt-na">—</span></div>`;
-        }
-      });
-    }else{
-      COMM_STOOQ.forEach(i=>{html+=`<div class="cmkt-row"><span class="cmkt-name">${i.label}</span><span class="cmkt-na">代理失敗</span></div>`;});
-    }
+    const res=await fetch(url,{signal:AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const results=data?.quoteResponse?.result||[];
+    dbg(`Yahoo Finance 取得 ${results.length} 支: ${results.map(r=>r.symbol).join(',')}`, results.length?'ok':'warn');
+    return results;
   }catch(e){
-    COMM_STOOQ.forEach(i=>{html+=`<div class="cmkt-row"><span class="cmkt-name">${i.label}</span><span class="cmkt-na">—</span></div>`;});
-    dbg('Stooq 失敗:'+e.message,'err');
+    dbg('Yahoo Finance 失敗: '+e.message,'err');
+    return [];
   }
-  el.innerHTML=html||'<div style="padding:5px 10px;font-size:9px;color:var(--red)">載入失敗</div>';
+}
+
+function yfRow(name, q){
+  if(!q) return `<div class="cmkt-row"><span class="cmkt-name">${name}</span><span class="cmkt-na">—</span><span class="cmkt-na">—</span></div>`;
+  const p=q.regularMarketPrice;
+  const pct=q.regularMarketChangePercent||0;
+  const up=pct>=0;
+  const fmt=p>=1000?p.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}):p.toFixed(2);
+  return `<div class="cmkt-row"><span class="cmkt-name">${name}</span><span class="cmkt-val">${fmt}</span><span class="${up?'cmkt-up':'cmkt-dn'}">${up?'+':''}${pct.toFixed(2)}%</span></div>`;
 }
 
 // ═══════════════════════════════
-// 經濟日曆（Forex Factory JSON，直連+代理雙保險）
+// 亞洲指數（Yahoo Finance）
+// ═══════════════════════════════
+async function loadYFIndices(){
+  const el=document.getElementById('yf-indices-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:4px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+  const syms=['^TWII','TWN=F','^N225','^HSI','^KS11','^BSESN'];
+  const labels={'^TWII':'台灣加權','TWN=F':'台指期貨','^N225':'日經225','^HSI':'恒生指數','^KS11':'韓國KOSPI','^BSESN':'印度SENSEX'};
+  const results=await fetchYahooFinance(syms);
+  const mp={};
+  results.forEach(r=>mp[r.symbol]=r);
+  el.innerHTML=syms.map(s=>yfRow(labels[s]||s, mp[s])).join('');
+}
+
+// ═══════════════════════════════
+// 商品/指標（Yahoo Finance）
+// ═══════════════════════════════
+async function loadCustomCommodities(){
+  const el=document.getElementById('custom-comm-rows');
+  if(!el) return;
+  el.innerHTML='<div style="padding:4px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
+  const syms=['^VIX','^TNX','NG=F','HG=F','GC=F','CL=F'];
+  const labels={'^VIX':'恐慌 VIX','^TNX':'美10年債%','NG=F':'天然氣期','HG=F':'銅期','GC=F':'黃金期','CL=F':'原油期'};
+  const results=await fetchYahooFinance(syms);
+  const mp={};
+  results.forEach(r=>mp[r.symbol]=r);
+  el.innerHTML=syms.map(s=>yfRow(labels[s]||s, mp[s])).join('');
+}
+
+// ═══════════════════════════════
+// DXY（Yahoo Finance）— 自動載入
+// ═══════════════════════════════
+async function loadYFDxy(){
+  const el=document.getElementById('yf-dxy-rows');
+  if(!el) return;
+  const results=await fetchYahooFinance(['DX-Y.NYB']);
+  const q=results[0];
+  el.innerHTML=yfRow('美元指數 DXY', q);
+}
+
+// ═══════════════════════════════
+// 經濟日曆（Forex Factory JSON）
 // ═══════════════════════════════
 async function loadEconCalendar(){
   const el=document.getElementById('econ-cal-rows');
   if(!el) return;
   el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--amber)">抓取中...</div>';
-
-  const FF_URL='https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+  const FF_URLS=[
+    'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
+    'https://nfs.faireconomy.media/ff_calendar_nextweek.json'
+  ];
   let events=null;
-
-  // 嘗試直連
-  try{
-    const res=await fetch(FF_URL,{signal:AbortSignal.timeout(8000)});
-    if(res.ok){ events=await res.json(); dbg('FF日曆直連成功','ok'); }
-  }catch(e){ dbg('FF日曆直連失敗:'+e.message,'warn'); }
-
-  // 直連失敗改用代理
-  if(!events){
+  for(const url of FF_URLS){
     try{
-      const text=await fetchWithProxy(FF_URL);
-      if(text){ events=JSON.parse(text); dbg('FF日曆代理成功','ok'); }
-    }catch(e){ dbg('FF日曆代理失敗:'+e.message,'warn'); }
+      const res=await fetch(url,{signal:AbortSignal.timeout(10000)});
+      if(res.ok){ events=await res.json(); dbg(`FF日曆成功: ${url}`,'ok'); break; }
+    }catch(e){ dbg('FF日曆失敗:'+e.message,'warn'); }
   }
-
-  // 兩個都失敗 → 嘗試備用 URL（next week）
   if(!events){
-    try{
-      const res2=await fetch('https://nfs.faireconomy.media/ff_calendar_nextweek.json',{signal:AbortSignal.timeout(8000)});
-      if(res2.ok){ events=await res2.json(); dbg('FF日曆（下週）成功','ok'); }
-    }catch(e){ dbg('FF日曆下週也失敗','err'); }
-  }
-
-  if(!events){
-    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">日曆無法載入，請確認網路或稍後再試</div>';
+    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--red)">無法載入，請稍後再試</div>';
     return;
   }
-
   const imp=events
     .filter(e=>e.impact==='High'||(e.impact==='Medium'&&['USD','TWD','CNY','JPY','EUR'].includes(e.currency)))
     .filter(e=>['USD','TWD','CNY','JPY','EUR','GBP','KRW','AUD','CAD'].includes(e.currency))
     .slice(0,20);
-
-  if(!imp.length){
-    el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>';
-    return;
-  }
-
+  if(!imp.length){el.innerHTML='<div style="padding:5px 10px;font-size:9px;color:var(--dim)">本週無重大事件</div>';return;}
   el.innerHTML=imp.map(ev=>{
     const dot=ev.impact==='High'?'🔴':ev.impact==='Medium'?'🟡':'⚪';
     const hasA=ev.actual&&ev.actual.trim()!=='';
@@ -1403,11 +1337,14 @@ setInterval(tick,1000);tick();
 filterCat('all');
 fetchQuakes();
 fetchWeather();
-dbg('系統就緒 v6.5 — GitHub Pages 版本','ok');
-dbg('指數：FOREXCOM:（台灣加權無免費授權已移除）','ok');
-dbg('商品上段：FOREXCOM黃金/油/銀/BTC | 下段點「⟳載入」= FRED+Stooq','ok');
-dbg('外匯：FOREXCOM:DXY','ok');
-dbg('經濟日曆：點「⟳載入」= Forex Factory JSON','ok');
+// 自動載入 Yahoo Finance 資料（伺服器上直連，無需代理）
+loadYFIndices();
+loadYFDxy();
+dbg('系統就緒 v7.0 — Yahoo Finance 版','ok');
+dbg('指數：TradingView(美歐) + Yahoo Finance(台灣/日/港/韓/印)','ok');
+dbg('商品：TradingView(金/油/銀/BTC) + Yahoo Finance(VIX/US10Y/NatGas/銅/期貨)','ok');
+dbg('外匯：TradingView(FX對) + Yahoo Finance(DXY)','ok');
+dbg('經濟日曆：Forex Factory JSON，點「⟳載入」','ok');
 </script>
 </body>
 </html>
